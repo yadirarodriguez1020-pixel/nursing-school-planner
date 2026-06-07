@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .gpa-display {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .gpa-box {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-top: 4px solid #667eea;
+        }
+
+        .gpa-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .gpa-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .gpa-info {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            width: auto;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+        }
+
+        .btn-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #40c057;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .courses-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .courses-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .courses-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .courses-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .course-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .course-item:hover {
+            background: #f0f1f5;
+            transform: translateX(5px);
+        }
+
+        .course-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .course-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .course-grade {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .course-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .course-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .grade-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .grade-a {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .grade-b {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .grade-c {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .grade-d {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .grade-f {
+            background: #ffcccc;
+            color: #cc0000;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-text {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .calculator-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .calculator-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .grade-scale {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .grade-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .grade-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .grade-row-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .grade-row-value {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #1565c0;
+        }
+
+        .prediction-box {
+            background: #f0f1f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .prediction-label {
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .prediction-value {
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .gpa-display {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 GPA Calculator Tool</h1>
+            <p>Calculate and track your GPA with advanced features</p>
+        </div>
+
+        <div class="gpa-display" id="gpaDisplay"></div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" style="max-width: 200px;" onclick="openAddCourseModal()">+ Add Course</button>
+            <button class="btn btn-success" style="max-width: 200px;" onclick="exportTranscript()">📄 Export Transcript</button>
+            <button class="btn btn-danger btn-small" onclick="clearAllCourses()">Clear All</button>
+        </div>
+
+        <div id="successMessage"></div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2>➕ Add Course</h2>
+                <div class="form-group">
+                    <label for="courseName">Course Name *</label>
+                    <input type="text" id="courseName" placeholder="e.g., Anatomy 101">
+                </div>
+                <div class="form-group">
+                    <label for="courseCode">Course Code</label>
+                    <input type="text" id="courseCode" placeholder="e.g., BIO 101">
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label for="grade">Grade *</label>
+                        <select id="grade" required onchange="updateGradePoints()">
+                            <option value="">Select Grade</option>
+                            <option value="A">A (4.0)</option>
+                            <option value="A-">A- (3.7)</option>
+                            <option value="B+">B+ (3.3)</option>
+                            <option value="B">B (3.0)</option>
+                            <option value="B-">B- (2.7)</option>
+                            <option value="C+">C+ (2.3)</option>
+                            <option value="C">C (2.0)</option>
+                            <option value="C-">C- (1.7)</option>
+                            <option value="D">D (1.0)</option>
+                            <option value="F">F (0.0)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="credits">Credit Hours *</label>
+                        <input type="number" id="credits" placeholder="3" min="1" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="semester">Semester</label>
+                        <select id="semester">
+                            <option value="Current">Current</option>
+                            <option value="Fall 2024">Fall 2024</option>
+                            <option value="Spring 2025">Spring 2025</option>
+                            <option value="Summer 2025">Summer 2025</option>
+                            <option value="Previous">Previous</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addCourse()">Add Course</button>
+            </div>
+
+            <div class="card">
+                <h2>🎓 Grade Scale Reference</h2>
+                <div class="grade-scale">
+                    <div class="grade-row">
+                        <div class="grade-row-label">A</div>
+                        <div class="grade-row-value">4.0</div>
+                        <div class="grade-row-value">90-100%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">A-</div>
+                        <div class="grade-row-value">3.7</div>
+                        <div class="grade-row-value">87-89%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">B+</div>
+                        <div class="grade-row-value">3.3</div>
+                        <div class="grade-row-value">83-86%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">B</div>
+                        <div class="grade-row-value">3.0</div>
+                        <div class="grade-row-value">80-82%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">B-</div>
+                        <div class="grade-row-value">2.7</div>
+                        <div class="grade-row-value">77-79%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">C+</div>
+                        <div class="grade-row-value">2.3</div>
+                        <div class="grade-row-value">73-76%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">C</div>
+                        <div class="grade-row-value">2.0</div>
+                        <div class="grade-row-value">70-72%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">D</div>
+                        <div class="grade-row-value">1.0</div>
+                        <div class="grade-row-value">60-69%</div>
+                    </div>
+                    <div class="grade-row">
+                        <div class="grade-row-label">F</div>
+                        <div class="grade-row-value">0.0</div>
+                        <div class="grade-row-value">Below 60%</div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <strong>💡 Tip:</strong> Most graduate programs look for a minimum GPA of 3.0. Maintain high grades in your nursing courses!
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Courses</h2>
+            <div class="courses-list" id="coursesList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📚</div>
+                    <div class="empty-state-text">No courses added yet</div>
+                    <p>Add a course to start tracking your GPA!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>🔮 GPA Prediction Calculator</h2>
+            <div class="calculator-section">
+                <h3>What GPA do you need?</h3>
+                <div class="form-group">
+                    <label for="futureGrade">Assumed Grade for Future Courses</label>
+                    <select id="futureGrade">
+                        <option value="4.0">A (4.0)</option>
+                        <option value="3.7">A- (3.7)</option>
+                        <option value="3.3">B+ (3.3)</option>
+                        <option value="3.0" selected>B (3.0)</option>
+                        <option value="2.7">B- (2.7)</option>
+                        <option value="2.0">C (2.0)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="futureCourses">Number of Future Courses</label>
+                    <input type="number" id="futureCourses" value="3" min="1" max="20">
+                </div>
+                <div class="form-group">
+                    <label for="futureCredits">Credits per Course (Average)</label>
+                    <input type="number" id="futureCredits" value="3" min="1" max="5">
+                </div>
+                <button class="btn btn-primary" onclick="calculatePrediction()">Calculate Prediction</button>
+                <div class="prediction-box" style="display: none;" id="predictionResult">
+                    <div class="prediction-label">Projected GPA After Courses:</div>
+                    <div class="prediction-value" id="projectedGPA">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Course Modal -->
+    <div class="modal" id="addCourseModal">
+        <div class="modal-content">
+            <h2>Add Course</h2>
+            <div class="form-group">
+                <label for="modalCourseName">Course Name *</label>
+                <input type="text" id="modalCourseName" placeholder="e.g., Anatomy 101">
+            </div>
+            <div class="form-group">
+                <label for="modalCourseCode">Course Code</label>
+                <input type="text" id="modalCourseCode" placeholder="e.g., BIO 101">
+            </div>
+            <div class="form-group">
+                <label for="modalGrade">Grade *</label>
+                <select id="modalGrade" required>
+                    <option value="">Select Grade</option>
+                    <option value="A">A (4.0)</option>
+                    <option value="A-">A- (3.7)</option>
+                    <option value="B+">B+ (3.3)</option>
+                    <option value="B">B (3.0)</option>
+                    <option value="B-">B- (2.7)</option>
+                    <option value="C+">C+ (2.3)</option>
+                    <option value="C">C (2.0)</option>
+                    <option value="C-">C- (1.7)</option>
+                    <option value="D">D (1.0)</option>
+                    <option value="F">F (0.0)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="modalCredits">Credit Hours *</label>
+                <input type="number" id="modalCredits" placeholder="3" min="1" max="5" required>
+            </div>
+            <div class="form-group">
+                <label for="modalSemester">Semester</label>
+                <select id="modalSemester">
+                    <option value="Current">Current</option>
+                    <option value="Fall 2024">Fall 2024</option>
+                    <option value="Spring 2025">Spring 2025</option>
+                    <option value="Summer 2025">Summer 2025</option>
+                    <option value="Previous">Previous</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="addCourseFromModal()">Add Course</button>
+                <button class="btn btn-secondary" onclick="closeAddCourseModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const COURSES_KEY = 'gpaCalculatorCourses';
+
+        // Grade Scale
+        const gradeScale = {
+            'A': 4.0,
+            'A-': 3.7,
+            'B+': 3.3,
+            'B': 3.0,
+            'B-': 2.7,
+            'C+': 2.3,
+            'C': 2.0,
+            'C-': 1.7,
+            'D': 1.0,
+            'F': 0.0
+        };
+
+        // State
+        let courses = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCourses();
+            renderCourses();
+            updateGPADisplay();
+        });
+
+        // LocalStorage
+        function saveCourses() {
+            localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
+        }
+
+        function loadCourses() {
+            const stored = localStorage.getItem(COURSES_KEY);
+            courses = stored ? JSON.parse(stored) : [];
+        }
+
+        // Modal Functions
+        function openAddCourseModal() {
+            document.getElementById('modalCourseName').value = '';
+            document.getElementById('modalCourseCode').value = '';
+            document.getElementById('modalGrade').value = '';
+            document.getElementById('modalCredits').value = '3';
+            document.getElementById('modalSemester').value = 'Current';
+            document.getElementById('addCourseModal').classList.add('active');
+        }
+
+        function closeAddCourseModal() {
+            document.getElementById('addCourseModal').classList.remove('active');
+        }
+
+        // Course Functions
+        function addCourse() {
+            const name = document.getElementById('courseName').value.trim();
+            const code = document.getElementById('courseCode').value.trim();
+            const grade = document.getElementById('grade').value;
+            const credits = parseInt(document.getElementById('credits').value);
+            const semester = document.getElementById('semester').value;
+
+            if (!name || !grade || !credits) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+
+            addCourseData(name, code, grade, credits, semester);
+
+            document.getElementById('courseName').value = '';
+            document.getElementById('courseCode').value = '';
+            document.getElementById('grade').value = '';
+            document.getElementById('credits').value = '';
+            document.getElementById('semester').value = 'Current';
+        }
+
+        function addCourseFromModal() {
+            const name = document.getElementById('modalCourseName').value.trim();
+            const code = document.getElementById('modalCourseCode').value.trim();
+            const grade = document.getElementById('modalGrade').value;
+            const credits = parseInt(document.getElementById('modalCredits').value);
+            const semester = document.getElementById('modalSemester').value;
+
+            if (!name || !grade || !credits) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+
+            addCourseData(name, code, grade, credits, semester);
+            closeAddCourseModal();
+        }
+
+        function addCourseData(name, code, grade, credits, semester) {
+            const course = {
+                id: Date.now(),
+                name,
+                code,
+                grade,
+                gradePoints: gradeScale[grade],
+                credits,
+                semester,
+                createdAt: new Date().toISOString()
+            };
+
+            courses.push(course);
+            saveCourses();
+            renderCourses();
+            updateGPADisplay();
+            showMessage('Course added successfully!');
+        }
+
+        function deleteCourse(id) {
+            if (confirm('Delete this course?')) {
+                courses = courses.filter(c => c.id !== id);
+                saveCourses();
+                renderCourses();
+                updateGPADisplay();
+                showMessage('Course deleted!');
+            }
+        }
+
+        function editCourse(id) {
+            const course = courses.find(c => c.id === id);
+            if (!course) return;
+
+            const newGrade = prompt('Enter new grade:', course.grade);
+            if (!newGrade || !(newGrade in gradeScale)) {
+                alert('Invalid grade!');
+                return;
+            }
+
+            course.grade = newGrade;
+            course.gradePoints = gradeScale[newGrade];
+            saveCourses();
+            renderCourses();
+            updateGPADisplay();
+            showMessage('Course updated!');
+        }
+
+        function renderCourses() {
+            const list = document.getElementById('coursesList');
+
+            if (courses.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📚</div>
+                        <div class="empty-state-text">No courses added yet</div>
+                        <p>Add a course to start tracking your GPA!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by semester
+            const bySemester = {};
+            courses.forEach(course => {
+                if (!bySemester[course.semester]) {
+                    bySemester[course.semester] = [];
+                }
+                bySemester[course.semester].push(course);
+            });
+
+            let html = '';
+            Object.entries(bySemester).sort().reverse().forEach(([semester, semesterCourses]) => {
+                html += `<div style="margin-bottom: 25px;">
+                    <div style="font-weight: 600; color: #666; margin-bottom: 12px; font-size: 0.95em;">${semester}</div>`;
+                
+                semesterCourses.forEach(course => {
+                    const gradeClass = 'grade-' + course.grade[0].toLowerCase();
+                    html += `
+                        <div class="course-item">
+                            <div class="course-item-header">
+                                <div>
+                                    <div class="course-name">${escapeHtml(course.name)}</div>
+                                    ${course.code ? `<div style="color: #999; font-size: 0.9em; margin-top: 4px;">${escapeHtml(course.code)}</div>` : ''}
+                                </div>
+                                <div class="course-grade">${course.grade}</div>
+                            </div>
+                            <div class="course-meta">
+                                <div>📊 ${course.gradePoints.toFixed(1)} Points</div>
+                                <div>📚 ${course.credits} Credits</div>
+                            </div>
+                            <div class="course-actions">
+                                <button class="btn btn-secondary btn-small" onclick="editCourse(${course.id})">Edit</button>
+                                <button class="btn btn-danger btn-small" onclick="deleteCourse(${course.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            });
+
+            list.innerHTML = html;
+        }
+
+        // GPA Calculations
+        function calculateGPA() {
+            if (courses.length === 0) return 0;
+
+            let totalPoints = 0;
+            let totalCredits = 0;
+
+            courses.forEach(course => {
+                totalPoints += course.gradePoints * course.credits;
+                totalCredits += course.credits;
+            });
+
+            return totalCredits > 0 ? totalPoints / totalCredits : 0;
+        }
+
+        function calculateSemesterGPA(semester) {
+            const semesterCourses = courses.filter(c => c.semester === semester);
+            if (semesterCourses.length === 0) return 0;
+
+            let totalPoints = 0;
+            let totalCredits = 0;
+
+            semesterCourses.forEach(course => {
+                totalPoints += course.gradePoints * course.credits;
+                totalCredits += course.credits;
+            });
+
+            return totalCredits > 0 ? totalPoints / totalCredits : 0;
+        }
+
+        function updateGPADisplay() {
+            const currentGPA = calculateGPA();
+            const currentSemesterGPA = calculateSemesterGPA('Current');
+            const totalCredits = courses.reduce((sum, c) => sum + c.credits, 0);
+            const qualityPoints = courses.reduce((sum, c) => sum + (c.gradePoints * c.credits), 0);
+
+            let display = `
+                <div class="gpa-box">
+                    <div class="gpa-label">Overall GPA</div>
+                    <div class="gpa-value">${currentGPA.toFixed(2)}</div>
+                    <div class="gpa-info">${courses.length} courses</div>
+                </div>
+                <div class="gpa-box">
+                    <div class="gpa-label">Current Semester GPA</div>
+                    <div class="gpa-value">${currentSemesterGPA.toFixed(2)}</div>
+                    <div class="gpa-info">${courses.filter(c => c.semester === 'Current').length} courses</div>
+                </div>
+                <div class="gpa-box">
+                    <div class="gpa-label">Total Credits</div>
+                    <div class="gpa-value">${totalCredits}</div>
+                    <div class="gpa-info">${qualityPoints.toFixed(1)} quality points</div>
+                </div>
+            `;
+
+            if (currentGPA >= 3.8) {
+                display += `<div class="gpa-box" style="border-top-color: #51cf66;">
+                    <div class="gpa-label">Performance</div>
+                    <div style="font-size: 1.5em; margin: 10px 0;">🌟 Excellent</div>
+                    <div class="gpa-info">Outstanding academic achievement!</div>
+                </div>`;
+            } else if (currentGPA >= 3.5) {
+                display += `<div class="gpa-box" style="border-top-color: #51cf66;">
+                    <div class="gpa-label">Performance</div>
+                    <div style="font-size: 1.5em; margin: 10px 0;">⭐ Very Good</div>
+                    <div class="gpa-info">Strong academic standing</div>
+                </div>`;
+            } else if (currentGPA >= 3.0) {
+                display += `<div class="gpa-box" style="border-top-color: #4facfe;">
+                    <div class="gpa-label">Performance</div>
+                    <div style="font-size: 1.5em; margin: 10px 0;">👍 Good</div>
+                    <div class="gpa-info">Meeting expectations</div>
+                </div>`;
+            } else if (currentGPA > 0) {
+                display += `<div class="gpa-box" style="border-top-color: #ffa94d;">
+                    <div class="gpa-label">Performance</div>
+                    <div style="font-size: 1.5em; margin: 10px 0;">⚠️ Needs Improvement</div>
+                    <div class="gpa-info">Focus on improvement</div>
+                </div>`;
+            }
+
+            document.getElementById('gpaDisplay').innerHTML = display;
+        }
+
+        function calculatePrediction() {
+            const futureGrade = parseFloat(document.getElementById('futureGrade').value);
+            const futureCourses = parseInt(document.getElementById('futureCourses').value);
+            const futureCredits = parseInt(document.getElementById('futureCredits').value);
+
+            let currentTotalPoints = 0;
+            let currentTotalCredits = 0;
+
+            courses.forEach(course => {
+                currentTotalPoints += course.gradePoints * course.credits;
+                currentTotalCredits += course.credits;
+            });
+
+            const futurePoints = futureGrade * futureCredits * futureCourses;
+            const projectedPoints = currentTotalPoints + futurePoints;
+            const projectedCredits = currentTotalCredits + (futureCredits * futureCourses);
+
+            const projectedGPA = projectedCredits > 0 ? projectedPoints / projectedCredits : 0;
+
+            document.getElementById('projectedGPA').textContent = projectedGPA.toFixed(2);
+            document.getElementById('predictionResult').style.display = 'block';
+        }
+
+        function updateGradePoints() {
+            // Function for form grade updates
+        }
+
+        // Utility Functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showMessage(message) {
+            const container = document.getElementById('successMessage');
+            container.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        function exportTranscript() {
+            if (courses.length === 0) {
+                alert('No courses to export!');
+                return;
+            }
+
+            const gpa = calculateGPA();
+            let exportText = 'ACADEMIC TRANSCRIPT\n';
+            exportText += '='.repeat(80) + '\n\n';
+
+            exportText += 'SUMMARY\n';
+            exportText += '-'.repeat(80) + '\n';
+            exportText += `Overall GPA: ${gpa.toFixed(2)}\n`;
+            exportText += `Total Courses: ${courses.length}\n`;
+            exportText += `Total Credits: ${courses.reduce((sum, c) => sum + c.credits, 0)}\n`;
+            exportText += `Total Quality Points: ${courses.reduce((sum, c) => sum + (c.gradePoints * c.credits), 0).toFixed(1)}\n\n`;
+
+            // Group by semester
+            const bySemester = {};
+            courses.forEach(course => {
+                if (!bySemester[course.semester]) {
+                    bySemester[course.semester] = [];
+                }
+                bySemester[course.semester].push(course);
+            });
+
+            Object.entries(bySemester).sort().reverse().forEach(([semester, semesterCourses]) => {
+                const semesterGPA = calculateSemesterGPA(semester);
+                exportText += `${semester}\n`;
+                exportText += '-'.repeat(80) + '\n';
+                semesterCourses.forEach(course => {
+                    exportText += `${course.name}${course.code ? ` (${course.code})` : ''} - Grade: ${course.grade} (${course.gradePoints.toFixed(1)}) - Credits: ${course.credits}\n`;
+                });
+                exportText += `Semester GPA: ${semesterGPA.toFixed(2)}\n\n`;
+            });
+
+            exportText += '='.repeat(80) + '\n';
+            exportText += `Report Generated: ${new Date().toLocaleString()}\n`;
+
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `transcript-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            showMessage('Transcript exported successfully!');
+        }
+
+        function clearAllCourses() {
+            if (confirm('Clear ALL courses? This cannot be undone!')) {
+                courses = [];
+                saveCourses();
+                renderCourses();
+                updateGPADisplay();
+                showMessage('All courses cleared!');
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('addCourseModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addCourseModal')) {
+                closeAddCourseModal();
+            }
+        });
+    </script>
+</body>
+</html>
