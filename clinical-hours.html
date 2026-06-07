@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Hours Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .stat-unit {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+        }
+
+        .btn-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #40c057;
+        }
+
+        .shifts-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .shifts-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .shifts-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .shifts-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .shift-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+
+        .shift-item:hover {
+            background: #f0f1f5;
+            transform: translateX(5px);
+        }
+
+        .shift-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .shift-date {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .shift-hours {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .shift-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .shift-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .shift-description {
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .shift-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .unit-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: 600;
+            background: #e3f2fd;
+            color: #1565c0;
+            margin-right: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-text {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .chart-container {
+            margin: 20px 0;
+        }
+
+        .unit-distribution {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+
+        .unit-stat {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-top: 3px solid #667eea;
+        }
+
+        .unit-stat-hours {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .unit-stat-name {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .filter-bar select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .shift-meta {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Clinical Hours Tracker</h1>
+            <p>Track and manage your clinical rotation hours and experiences</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" style="max-width: 200px;" onclick="openAddShiftModal()">+ Log Shift</button>
+            <button class="btn btn-success" style="max-width: 200px;" onclick="exportReport()">📊 Export Report</button>
+            <button class="btn btn-danger btn-small" style="max-width: 150px;" onclick="clearAllShifts()">Clear All</button>
+        </div>
+
+        <div id="successMessage"></div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2>📋 Log New Shift</h2>
+                <div class="form-group">
+                    <label for="shiftDate">Date *</label>
+                    <input type="date" id="shiftDate" required>
+                </div>
+                <div class="input-row">
+                    <div class="form-group">
+                        <label for="startTime">Start Time *</label>
+                        <input type="time" id="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Time *</label>
+                        <input type="time" id="endTime" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="unit">Unit/Department *</label>
+                    <select id="unit" required>
+                        <option value="">Select Unit</option>
+                        <option value="Medical-Surgical">Medical-Surgical</option>
+                        <option value="ICU">ICU</option>
+                        <option value="Emergency">Emergency Department</option>
+                        <option value="OB/GYN">OB/GYN</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="Psychiatric">Psychiatric</option>
+                        <option value="Oncology">Oncology</option>
+                        <option value="Cardiac">Cardiac Care</option>
+                        <option value="Rehabilitation">Rehabilitation</option>
+                        <option value="Community">Community Health</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="preceptor">Preceptor/Instructor Name</label>
+                    <input type="text" id="preceptor" placeholder="e.g., Jane Smith, RN">
+                </div>
+                <div class="form-group">
+                    <label for="patientCount">Patient Count</label>
+                    <input type="number" id="patientCount" min="0" placeholder="Number of patients cared for">
+                </div>
+                <div class="form-group">
+                    <label for="skillsPracticed">Skills Practiced</label>
+                    <textarea id="skillsPracticed" placeholder="e.g., IV insertion, Catheterization, Wound dressing"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="procedures">Procedures/Observations</label>
+                    <textarea id="procedures" placeholder="e.g., Assisted with emergency surgery, Observed cardiac catheterization"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="reflections">Reflections & Learning</label>
+                    <textarea id="reflections" placeholder="What did you learn? What went well? What could you improve?"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="addShift()">Log Shift</button>
+            </div>
+
+            <div class="card">
+                <h2>📊 Statistics & Goals</h2>
+                <div style="margin-bottom: 25px;">
+                    <div style="margin-bottom: 10px;">
+                        <strong style="color: #333;">Total Hours Required</strong>
+                        <input type="number" id="requiredHours" value="180" min="0" style="width: 100%; margin-top: 8px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 style="color: #333; margin-bottom: 15px; font-size: 1.1em;">Hours by Unit</h3>
+                    <div class="unit-distribution" id="unitDistribution">
+                        <div class="empty-state-text">Add shifts to see distribution</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <strong style="color: #333;">Progress to Goal</strong>
+                        <span id="progressText" style="color: #667eea; font-weight: 600;">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; padding: 15px; background: #f0f1f5; border-radius: 8px;">
+                    <div style="color: #666; margin-bottom: 8px;">
+                        <strong>Remaining Hours:</strong> <span id="remainingHours" style="color: #667eea; font-weight: 600;">180</span>
+                    </div>
+                    <div style="color: #666;">
+                        <strong>Shifts Completed:</strong> <span id="shiftsCompleted" style="color: #667eea; font-weight: 600;">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📝 Shift Log</h2>
+            <div class="filter-bar">
+                <select id="filterUnit" onchange="renderShifts()">
+                    <option value="">All Units</option>
+                </select>
+                <select id="filterMonth" onchange="renderShifts()">
+                    <option value="">All Months</option>
+                </select>
+            </div>
+            <div class="shifts-list" id="shiftsList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-text">No shifts logged yet</div>
+                    <p>Log your first clinical shift to get started!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Shift Modal (for editing) -->
+    <div class="modal" id="editShiftModal">
+        <div class="modal-content">
+            <h2>Edit Shift</h2>
+            <div class="form-group">
+                <label for="editDate">Date</label>
+                <input type="date" id="editDate">
+            </div>
+            <div class="input-row">
+                <div class="form-group">
+                    <label for="editStartTime">Start Time</label>
+                    <input type="time" id="editStartTime">
+                </div>
+                <div class="form-group">
+                    <label for="editEndTime">End Time</label>
+                    <input type="time" id="editEndTime">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="editUnit">Unit</label>
+                <select id="editUnit">
+                    <option value="Medical-Surgical">Medical-Surgical</option>
+                    <option value="ICU">ICU</option>
+                    <option value="Emergency">Emergency Department</option>
+                    <option value="OB/GYN">OB/GYN</option>
+                    <option value="Pediatrics">Pediatrics</option>
+                    <option value="Psychiatric">Psychiatric</option>
+                    <option value="Oncology">Oncology</option>
+                    <option value="Cardiac">Cardiac Care</option>
+                    <option value="Rehabilitation">Rehabilitation</option>
+                    <option value="Community">Community Health</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editPreceptor">Preceptor Name</label>
+                <input type="text" id="editPreceptor">
+            </div>
+            <div class="form-group">
+                <label for="editPatientCount">Patient Count</label>
+                <input type="number" id="editPatientCount" min="0">
+            </div>
+            <div class="form-group">
+                <label for="editSkillsPracticed">Skills Practiced</label>
+                <textarea id="editSkillsPracticed"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editProcedures">Procedures/Observations</label>
+                <textarea id="editProcedures"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="editReflections">Reflections</label>
+                <textarea id="editReflections"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="saveEditShift()">Save Changes</button>
+                <button class="btn btn-secondary" onclick="closeEditShiftModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const SHIFTS_KEY = 'clinicalShifts';
+        const REQUIRED_HOURS_KEY = 'requiredHours';
+
+        // State
+        let shifts = [];
+        let editingId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadShifts();
+            setDefaultDate();
+            document.getElementById('requiredHours').addEventListener('change', () => {
+                localStorage.setItem(REQUIRED_HOURS_KEY, document.getElementById('requiredHours').value);
+                updateStats();
+            });
+            const savedHours = localStorage.getItem(REQUIRED_HOURS_KEY);
+            if (savedHours) {
+                document.getElementById('requiredHours').value = savedHours;
+            }
+            renderShifts();
+            updateStats();
+            updateFilters();
+        });
+
+        // LocalStorage
+        function saveShifts() {
+            localStorage.setItem(SHIFTS_KEY, JSON.stringify(shifts));
+        }
+
+        function loadShifts() {
+            const stored = localStorage.getItem(SHIFTS_KEY);
+            shifts = stored ? JSON.parse(stored) : [];
+        }
+
+        // Modal Functions
+        function openAddShiftModal() {
+            document.getElementById('shiftDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('startTime').value = '08:00';
+            document.getElementById('endTime').value = '16:00';
+            document.getElementById('unit').value = '';
+            document.getElementById('preceptor').value = '';
+            document.getElementById('patientCount').value = '';
+            document.getElementById('skillsPracticed').value = '';
+            document.getElementById('procedures').value = '';
+            document.getElementById('reflections').value = '';
+        }
+
+        function openEditShiftModal(id) {
+            const shift = shifts.find(s => s.id === id);
+            if (!shift) return;
+
+            editingId = id;
+            document.getElementById('editDate').value = shift.date;
+            document.getElementById('editStartTime').value = shift.startTime;
+            document.getElementById('editEndTime').value = shift.endTime;
+            document.getElementById('editUnit').value = shift.unit;
+            document.getElementById('editPreceptor').value = shift.preceptor;
+            document.getElementById('editPatientCount').value = shift.patientCount;
+            document.getElementById('editSkillsPracticed').value = shift.skillsPracticed;
+            document.getElementById('editProcedures').value = shift.procedures;
+            document.getElementById('editReflections').value = shift.reflections;
+            document.getElementById('editShiftModal').classList.add('active');
+        }
+
+        function closeEditShiftModal() {
+            document.getElementById('editShiftModal').classList.remove('active');
+            editingId = null;
+        }
+
+        // Shift Functions
+        function addShift() {
+            const date = document.getElementById('shiftDate').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const unit = document.getElementById('unit').value;
+            const preceptor = document.getElementById('preceptor').value;
+            const patientCount = document.getElementById('patientCount').value;
+            const skillsPracticed = document.getElementById('skillsPracticed').value;
+            const procedures = document.getElementById('procedures').value;
+            const reflections = document.getElementById('reflections').value;
+
+            if (!date || !startTime || !endTime || !unit) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+
+            if (endTime <= startTime) {
+                alert('End time must be after start time!');
+                return;
+            }
+
+            const hours = calculateHours(startTime, endTime);
+
+            const shift = {
+                id: Date.now(),
+                date,
+                startTime,
+                endTime,
+                hours,
+                unit,
+                preceptor,
+                patientCount: patientCount ? parseInt(patientCount) : 0,
+                skillsPracticed,
+                procedures,
+                reflections,
+                createdAt: new Date().toISOString()
+            };
+
+            shifts.push(shift);
+            saveShifts();
+            renderShifts();
+            updateStats();
+            updateFilters();
+            openAddShiftModal(); // Reset form
+            showMessage('Shift logged successfully!');
+        }
+
+        function saveEditShift() {
+            if (!editingId) return;
+
+            const shift = shifts.find(s => s.id === editingId);
+            if (!shift) return;
+
+            const date = document.getElementById('editDate').value;
+            const startTime = document.getElementById('editStartTime').value;
+            const endTime = document.getElementById('editEndTime').value;
+            const unit = document.getElementById('editUnit').value;
+
+            if (!date || !startTime || !endTime || !unit) {
+                alert('Please fill in all required fields!');
+                return;
+            }
+
+            if (endTime <= startTime) {
+                alert('End time must be after start time!');
+                return;
+            }
+
+            shift.date = date;
+            shift.startTime = startTime;
+            shift.endTime = endTime;
+            shift.hours = calculateHours(startTime, endTime);
+            shift.unit = unit;
+            shift.preceptor = document.getElementById('editPreceptor').value;
+            shift.patientCount = document.getElementById('editPatientCount').value ? parseInt(document.getElementById('editPatientCount').value) : 0;
+            shift.skillsPracticed = document.getElementById('editSkillsPracticed').value;
+            shift.procedures = document.getElementById('editProcedures').value;
+            shift.reflections = document.getElementById('editReflections').value;
+
+            saveShifts();
+            renderShifts();
+            updateStats();
+            updateFilters();
+            closeEditShiftModal();
+            showMessage('Shift updated successfully!');
+        }
+
+        function deleteShift(id) {
+            if (confirm('Delete this shift?')) {
+                shifts = shifts.filter(s => s.id !== id);
+                saveShifts();
+                renderShifts();
+                updateStats();
+                updateFilters();
+                showMessage('Shift deleted!');
+            }
+        }
+
+        function renderShifts() {
+            const list = document.getElementById('shiftsList');
+            const filterUnit = document.getElementById('filterUnit').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+
+            let filtered = shifts;
+
+            if (filterUnit) {
+                filtered = filtered.filter(s => s.unit === filterUnit);
+            }
+
+            if (filterMonth) {
+                filtered = filtered.filter(s => s.date.startsWith(filterMonth));
+            }
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <div class="empty-state-text">No shifts found</div>
+                        <p>Log your first clinical shift to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(shift => {
+                const dateObj = new Date(shift.date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+                
+                return `
+                    <div class="shift-item">
+                        <div class="shift-item-header">
+                            <div>
+                                <div class="shift-date">${dateStr}</div>
+                                <div style="margin-top: 5px;">
+                                    <span class="unit-badge">${shift.unit}</span>
+                                </div>
+                            </div>
+                            <div class="shift-hours">${shift.hours.toFixed(2)} hrs</div>
+                        </div>
+                        <div class="shift-meta">
+                            <div class="shift-meta-item">⏰ ${shift.startTime} - ${shift.endTime}</div>
+                            <div class="shift-meta-item">👥 ${shift.patientCount} patients</div>
+                            ${shift.preceptor ? `<div class="shift-meta-item">👨‍🏫 ${shift.preceptor}</div>` : ''}
+                        </div>
+                        ${shift.skillsPracticed ? `<div class="shift-description"><strong>Skills:</strong> ${shift.skillsPracticed}</div>` : ''}
+                        ${shift.procedures ? `<div class="shift-description"><strong>Procedures:</strong> ${shift.procedures}</div>` : ''}
+                        ${shift.reflections ? `<div class="shift-description"><strong>Reflections:</strong> ${shift.reflections}</div>` : ''}
+                        <div class="shift-actions">
+                            <button class="btn btn-secondary btn-small" onclick="openEditShiftModal(${shift.id})">Edit</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteShift(${shift.id})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Statistics
+        function updateStats() {
+            const totalHours = shifts.reduce((sum, s) => sum + s.hours, 0);
+            const requiredHours = parseInt(document.getElementById('requiredHours').value);
+            const progress = (totalHours / requiredHours) * 100;
+            const remaining = Math.max(0, requiredHours - totalHours);
+
+            // Update progress
+            document.getElementById('progressFill').style.width = Math.min(progress, 100) + '%';
+            document.getElementById('progressText').textContent = Math.min(progress, 100).toFixed(1) + '%';
+            document.getElementById('remainingHours').textContent = remaining.toFixed(2);
+            document.getElementById('shiftsCompleted').textContent = shifts.length;
+
+            // Update stats cards
+            const unitStats = {};
+            shifts.forEach(shift => {
+                if (!unitStats[shift.unit]) {
+                    unitStats[shift.unit] = 0;
+                }
+                unitStats[shift.unit] += shift.hours;
+            });
+
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalHours.toFixed(2)}</div>
+                    <div class="stat-label">Total Hours Logged</div>
+                    <div class="stat-unit">of ${requiredHours} required</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(progress, 100)}%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${shifts.length}</div>
+                    <div class="stat-label">Shifts Completed</div>
+                    <div class="stat-unit">${(totalHours / Math.max(shifts.length, 1)).toFixed(2)} hours/shift avg</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${remaining.toFixed(2)}</div>
+                    <div class="stat-label">Hours Remaining</div>
+                    <div class="stat-unit">${progress > 100 ? 'Goal Exceeded! ✓' : (progress === 100 ? 'Goal Met! ✓' : 'To reach goal')}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${Object.keys(unitStats).length}</div>
+                    <div class="stat-label">Units/Departments</div>
+                    <div class="stat-unit">Diverse clinical experience</div>
+                </div>
+            `;
+
+            // Update unit distribution
+            const unitDistribution = document.getElementById('unitDistribution');
+            if (Object.keys(unitStats).length === 0) {
+                unitDistribution.innerHTML = '<div class="empty-state-text">Add shifts to see distribution</div>';
+            } else {
+                unitDistribution.innerHTML = Object.entries(unitStats)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([unit, hours]) => `
+                        <div class="unit-stat">
+                            <div class="unit-stat-hours">${hours.toFixed(2)}</div>
+                            <div class="unit-stat-name">${unit}</div>
+                        </div>
+                    `).join('');
+            }
+        }
+
+        function updateFilters() {
+            const units = [...new Set(shifts.map(s => s.unit))].sort();
+            const months = [...new Set(shifts.map(s => s.date.substring(0, 7)))].sort().reverse();
+
+            const unitFilter = document.getElementById('filterUnit');
+            const monthFilter = document.getElementById('filterMonth');
+
+            const unitValue = unitFilter.value;
+            const monthValue = monthFilter.value;
+
+            unitFilter.innerHTML = '<option value="">All Units</option>' +
+                units.map(u => `<option value="${u}">${u}</option>`).join('');
+            
+            monthFilter.innerHTML = '<option value="">All Months</option>' +
+                months.map(m => {
+                    const [year, month] = m.split('-');
+                    const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    return `<option value="${m}">${monthName}</option>`;
+                }).join('');
+
+            unitFilter.value = unitValue;
+            monthFilter.value = monthValue;
+        }
+
+        // Utility Functions
+        function calculateHours(startTime, endTime) {
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            const [endHour, endMin] = endTime.split(':').map(Number);
+
+            const startTotalMin = startHour * 60 + startMin;
+            const endTotalMin = endHour * 60 + endMin;
+
+            return (endTotalMin - startTotalMin) / 60;
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('shiftDate').value = today;
+        }
+
+        function showMessage(message) {
+            const container = document.getElementById('successMessage');
+            container.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        function exportReport() {
+            if (shifts.length === 0) {
+                alert('No shifts to export!');
+                return;
+            }
+
+            const requiredHours = parseInt(document.getElementById('requiredHours').value);
+            const totalHours = shifts.reduce((sum, s) => sum + s.hours, 0);
+            const unitStats = {};
+
+            shifts.forEach(shift => {
+                if (!unitStats[shift.unit]) {
+                    unitStats[shift.unit] = 0;
+                }
+                unitStats[shift.unit] += shift.hours;
+            });
+
+            let exportText = 'CLINICAL HOURS TRACKER REPORT\n';
+            exportText += '='.repeat(80) + '\n\n';
+
+            exportText += 'SUMMARY\n';
+            exportText += '-'.repeat(80) + '\n';
+            exportText += `Total Hours Logged: ${totalHours.toFixed(2)}\n`;
+            exportText += `Required Hours: ${requiredHours}\n`;
+            exportText += `Progress: ${((totalHours/requiredHours)*100).toFixed(1)}%\n`;
+            exportText += `Shifts Completed: ${shifts.length}\n`;
+            exportText += `Average Hours per Shift: ${(totalHours/shifts.length).toFixed(2)}\n\n`;
+
+            exportText += 'HOURS BY UNIT\n';
+            exportText += '-'.repeat(80) + '\n';
+            Object.entries(unitStats).sort((a, b) => b[1] - a[1]).forEach(([unit, hours]) => {
+                exportText += `${unit}: ${hours.toFixed(2)} hours\n`;
+            });
+
+            exportText += '\n' + '='.repeat(80) + '\n';
+            exportText += 'SHIFT LOG\n';
+            exportText += '='.repeat(80) + '\n\n';
+
+            shifts.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(shift => {
+                exportText += `Date: ${shift.date}\n`;
+                exportText += `Time: ${shift.startTime} - ${shift.endTime} (${shift.hours.toFixed(2)} hours)\n`;
+                exportText += `Unit: ${shift.unit}\n`;
+                if (shift.preceptor) exportText += `Preceptor: ${shift.preceptor}\n`;
+                exportText += `Patients: ${shift.patientCount}\n`;
+                if (shift.skillsPracticed) exportText += `Skills: ${shift.skillsPracticed}\n`;
+                if (shift.procedures) exportText += `Procedures: ${shift.procedures}\n`;
+                if (shift.reflections) exportText += `Reflections: ${shift.reflections}\n`;
+                exportText += '\n';
+            });
+
+            const blob = new Blob([exportText], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clinical-hours-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+
+            showMessage('Report exported successfully!');
+        }
+
+        function clearAllShifts() {
+            if (confirm('Clear ALL shifts? This cannot be undone!')) {
+                shifts = [];
+                saveShifts();
+                renderShifts();
+                updateStats();
+                updateFilters();
+                showMessage('All shifts cleared!');
+            }
+        }
+
+        // Close modals on outside click
+        document.getElementById('editShiftModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editShiftModal')) {
+                closeEditShiftModal();
+            }
+        });
+    </script>
+</body>
+</html>
