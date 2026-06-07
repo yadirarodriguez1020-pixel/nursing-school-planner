@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exam Tracker - Nursing School Planner</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+        .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+        .nav a{padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit;background:rgba(255,255,255,0.12)}
+        .container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+        .header{margin-bottom:24px}
+        h1{font-size:2.2em;color:#333;margin-bottom:8px}
+        p{color:#666}
+        .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+        .card{background:#f8f9fa;border-radius:16px;padding:20px}
+        .form-group{margin-bottom:16px}
+        label{display:block;margin-bottom:8px;font-weight:700;color:#444}
+        input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #dfe3eb;font-family:inherit}
+        textarea{resize:vertical;min-height:100px}
+        button{width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:700;cursor:pointer}
+        .exam-list{margin-top:20px}
+        .exam-item{background:white;border-radius:14px;padding:16px;border:1px solid #e0e3ee;margin-bottom:14px}
+        .exam-item h3{margin-bottom:8px;color:#333}
+        .exam-meta{color:#555;display:flex;flex-wrap:wrap;gap:10px;font-size:0.95em}
+        .status{padding:4px 10px;border-radius:999px;font-size:0.85em;font-weight:700}
+        .status-upcoming{background:#fff3cd;color:#9a6700}
+        .status-ready{background:#d8f5d4;color:#2f9e44}
+        .status-missed{background:#ffe3e3;color:#c92a2a}
+        .actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap}
+        .small-btn{padding:10px;border:none;border-radius:10px;cursor:pointer;font-weight:700;color:white}
+        .edit-btn{background:#667eea}
+        .delete-btn{background:#ff6b6b}
+        .empty{padding:40px;text-align:center;color:#777}
+        @media(max-width:960px){.grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">Home</a>
+        <a href="progress-dashboard.html">Dashboard</a>
+        <a href="assignments.html">Assignments</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="gpa-calculator.html">GPA</a>
+        <a href="clinical-hours.html">Clinical</a>
+        <a href="nclex-quiz.html">NCLEX</a>
+        <a href="study-schedule.html">Study</a>
+        <a href="skills-checklist.html">Skills</a>
+        <a href="weekly-planner.html">Planner</a>
+        <a href="exam-tracker.html">Exams</a>
+        <a href="habit-tracker.html">Habits</a>
+        <a href="self-care-log.html">Self-Care</a>
+        <a href="class-schedule.html">Classes</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Exam Tracker</h1>
+            <p>Track upcoming exams, target scores, progress, and priorities.</p>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Add Exam</h2>
+                <div class="form-group"><label for="examName">Exam Name</label><input id="examName" placeholder="Pharmacology Final"/></div>
+                <div class="form-group"><label for="examSubject">Subject</label><input id="examSubject" placeholder="Nursing Pharmacology"/></div>
+                <div class="form-group"><label for="examDate">Date</label><input id="examDate" type="date"/></div>
+                <div class="form-group"><label for="examTarget">Target Score</label><input id="examTarget" type="number" min="0" max="100" value="85"/></div>
+                <div class="form-group"><label for="examProgress">Progress %</label><input id="examProgress" type="number" min="0" max="100" value="0"/></div>
+                <div class="form-group"><label for="examNotes">Notes</label><textarea id="examNotes" placeholder="Practice tests, topics to review..."></textarea></div>
+                <button onclick="saveExam()">Save Exam</button>
+            </div>
+            <div class="card">
+                <h2>Exam Summary</h2>
+                <div id="examSummary" style="color:#555;line-height:1.75"></div>
+            </div>
+        </div>
+        <div class="card exam-list" id="examsList"></div>
+    </div>
+    <script>
+        const STORAGE_KEY='nsp_exam_tracker'; let exams=[];
+        document.addEventListener('DOMContentLoaded',()=>{ loadExams(); renderExams(); });
+        function loadExams(){ exams=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+        function saveExams(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(exams)); }
+        function saveExam(){ const name=document.getElementById('examName').value.trim(); const subject=document.getElementById('examSubject').value.trim(); const date=document.getElementById('examDate').value; const target=parseInt(document.getElementById('examTarget').value); const progress=parseInt(document.getElementById('examProgress').value); if(!name||!subject||!date||isNaN(target)||isNaN(progress)){ alert('Fill in all required fields'); return; } exams.push({ id:Date.now(), name, subject, date, target, progress, notes:document.getElementById('examNotes').value.trim() }); saveExams(); renderExams(); resetForm(); }
+        function resetForm(){ document.getElementById('examName').value=''; document.getElementById('examSubject').value=''; document.getElementById('examDate').value=''; document.getElementById('examTarget').value='85'; document.getElementById('examProgress').value='0'; document.getElementById('examNotes').value=''; }
+        function renderExams(){ const container=document.getElementById('examsList'); if(exams.length===0){ container.innerHTML='<div class="empty"><p>No exams tracked yet.</p></div>'; updateSummary(); return; } exams.sort((a,b)=>new Date(a.date)-new Date(b.date)); container.innerHTML=exams.map(ex=>`<div class="exam-item"><h3>${escapeHtml(ex.name)}</h3><div class="exam-meta"><span>${formatDate(ex.date)}</span><span>${escapeHtml(ex.subject)}</span><span>Target: ${ex.target}%</span><span>Progress: ${ex.progress}%</span></div><p style="margin-top:12px;color:#555;">${escapeHtml(ex.notes)||'<em>No notes added</em>'}</p><div class="actions"><button class="small-btn edit-btn" onclick="editExam(${ex.id})">Edit</button><button class="small-btn delete-btn" onclick="deleteExam(${ex.id})">Delete</button></div></div>`).join(''); updateSummary(); }
+        function updateSummary(){ const total=exams.length; const upcoming=exams.filter(ex=>new Date(ex.date)>=new Date()).length; const avgProgress=total?Math.round(exams.reduce((sum,x)=>sum+x.progress,0)/total):0; document.getElementById('examSummary').innerHTML=`<p>Total exams: <strong>${total}</strong></p><p>Upcoming: <strong>${upcoming}</strong></p><p>Avg progress: <strong>${avgProgress}%</strong></p>`; }
+        function deleteExam(id){ exams=exams.filter(ex=>ex.id!==id); saveExams(); renderExams(); }
+        function editExam(id){ const ex = exams.find(x=>x.id===id); if(!ex) return; document.getElementById('examName').value=ex.name; document.getElementById('examSubject').value=ex.subject; document.getElementById('examDate').value=ex.date; document.getElementById('examTarget').value=ex.target; document.getElementById('examProgress').value=ex.progress; document.getElementById('examNotes').value=ex.notes; deleteExam(id); }
+        function formatDate(date){ return new Date(date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+    </script>
+</body>
+</html>

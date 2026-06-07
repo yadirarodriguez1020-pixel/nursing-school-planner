@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weekly Planner - Nursing School Planner</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+        .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+        .nav a{padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit;background:rgba(255,255,255,0.12)}
+        .container{max-width:1200px;margin:0 auto;background:white;border-radius:20px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+        .header{margin-bottom:24px}
+        .header h1{font-size:2.2em;color:#333;margin-bottom:8px}
+        .header p{color:#666}
+        .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+        .card{background:#f8f9fa;border-radius:16px;padding:20px}
+        .form-group{margin-bottom:16px}
+        label{display:block;margin-bottom:8px;font-weight:700;color:#444}
+        input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #dfe3eb;font-family:inherit}
+        textarea{resize:vertical;min-height:100px}
+        button{width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:700;cursor:pointer}
+        .planner-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-top:20px}
+        .day-card{background:white;border-radius:14px;padding:14px;min-height:180px;border:1px solid #e2e6ef;}
+        .day-card h3{font-size:1em;margin-bottom:10px;color:#333}
+        .slot{background:#f0f4ff;padding:10px;border-radius:10px;margin-bottom:10px;font-size:0.9em;color:#333}
+        .empty{color:#777;text-align:center;padding:30px 0}
+        @media(max-width:960px){.grid{grid-template-columns:1fr}.planner-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">Home</a>
+        <a href="progress-dashboard.html">Dashboard</a>
+        <a href="assignments.html">Assignments</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="gpa-calculator.html">GPA</a>
+        <a href="clinical-hours.html">Clinical</a>
+        <a href="nclex-quiz.html">NCLEX</a>
+        <a href="study-schedule.html">Study</a>
+        <a href="skills-checklist.html">Skills</a>
+        <a href="weekly-planner.html">Planner</a>
+        <a href="exam-tracker.html">Exams</a>
+        <a href="habit-tracker.html">Habits</a>
+        <a href="self-care-log.html">Self-Care</a>
+        <a href="class-schedule.html">Classes</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🗓 Weekly Planner</h1>
+            <p>Build your weekly study and clinical schedule in one easy planner.</p>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Add Planner Item</h2>
+                <div class="form-group"><label for="planDay">Day</label><select id="planDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+                <div class="form-group"><label for="planTime">Time</label><input id="planTime" type="time" value="08:00"/></div>
+                <div class="form-group"><label for="planType">Type</label><select id="planType"><option>Class</option><option>Study</option><option>Clinical</option><option>Personal</option><option>Exam Prep</option></select></div>
+                <div class="form-group"><label for="planDescription">Description</label><textarea id="planDescription" placeholder="e.g., Pharmacology review"></textarea></div>
+                <button onclick="addPlanItem()">Add to Planner</button>
+            </div>
+            <div class="card">
+                <h2>Planner Summary</h2>
+                <div id="plannerSummary" style="color:#555; line-height:1.75"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Your Week</h2>
+            <div class="planner-grid" id="plannerGrid"></div>
+        </div>
+    </div>
+    <script>
+        const STORAGE_KEY='nsp_weekly_planner'; let items=[];
+        document.addEventListener('DOMContentLoaded',()=>{ loadItems(); renderPlanner(); });
+        function loadItems(){ items=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+        function saveItems(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(items)); }
+        function addPlanItem(){ const day=document.getElementById('planDay').value; const time=document.getElementById('planTime').value; const type=document.getElementById('planType').value; const description=document.getElementById('planDescription').value.trim(); if(!description){ alert('Enter a description'); return; } items.push({ id:Date.now(), day,time,type,description }); saveItems(); renderPlanner(); document.getElementById('planDescription').value=''; }
+        function renderPlanner(){ const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']; const grid=document.getElementById('plannerGrid'); grid.innerHTML = days.map(day=>{ const dayItems=items.filter(i=>i.day===day).sort((a,b)=>a.time.localeCompare(b.time)); const slots = dayItems.length? dayItems.map(i=>`<div class="slot"><strong>${escapeHtml(i.time)}</strong> • ${escapeHtml(i.type)}<br>${escapeHtml(i.description)}<div style="margin-top:10px;"><button style="font-size:0.75em;padding:6px 8px;border:none;border-radius:8px;background:#ff6b6b;color:white;cursor:pointer;" onclick="deleteItem(${i.id})">Delete</button></div></div>`).join('') : '<div class="empty">No items</div>'; return `<div class="day-card"><h3>${day}</h3>${slots}</div>`; }).join(''); updateSummary(); }
+        function deleteItem(id){ items=items.filter(i=>i.id!==id); saveItems(); renderPlanner(); }
+        function updateSummary(){ const total=items.length; const byType=items.reduce((acc,i)=>{acc[i.type]=(acc[i.type]||0)+1;return acc;},{}); document.getElementById('plannerSummary').innerHTML=`<p>Total items: <strong>${total}</strong></p>${Object.entries(byType).map(([type,count])=>`<p>${escapeHtml(type)}: <strong>${count}</strong></p>`).join('')}`; }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+    </script>
+</body>
+</html>

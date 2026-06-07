@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skills Checklist - Nursing School Planner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; padding:20px; }
+        .nav { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+        .nav a { padding:8px 12px; border-radius:8px; text-decoration:none; color:inherit; background: rgba(255,255,255,0.12); }
+        .container { max-width:1200px; margin:0 auto; background:white; border-radius:20px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.18); }
+        .header { margin-bottom:24px; }
+        .header h1 { color:#333; font-size:2.2em; margin-bottom:8px; }
+        .header p { color:#666; }
+        .grid { display:grid; gap:20px; grid-template-columns:1fr 360px; }
+        .card { background:#f8f9fa; border-radius:16px; padding:20px; }
+        .form-group { margin-bottom:16px; }
+        label { display:block; margin-bottom:6px; font-weight:700; color:#444; }
+        input, select, textarea { width:100%; padding:12px; border-radius:10px; border:1px solid #dfe3eb; font-family:inherit; }
+        textarea { min-height:100px; resize:vertical; }
+        button { width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(135deg,#667eea,#764ba2); color:white; font-weight:700; cursor:pointer; }
+        .list { margin-top:20px; }
+        .item { background:white; border-radius:12px; padding:16px; border:1px solid #e0e3ee; margin-bottom:12px; }
+        .item-header { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+        .item-title { font-weight:700; color:#333; margin-bottom:8px; }
+        .badge { padding:4px 10px; border-radius:999px; font-size:0.8em; font-weight:700; display:inline-flex; align-items:center; }
+        .status-not-started { background:#fff3cd; color:#9a6700; }
+        .status-in-progress { background:#d0ebff; color:#1864ab; }
+        .status-mastered { background:#d8f5d4; color:#2f9e44; }
+        .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+        .small-btn { flex:1; padding:10px; border:none; border-radius:10px; cursor:pointer; font-weight:700; }
+        .edit-btn { background:#fff; border:1px solid #667eea; color:#333; }
+        .delete-btn { background:#ff6b6b; color:white; }
+        .empty { text-align:center; color:#777; padding:40px 0; }
+        @media(max-width:960px){ .grid{grid-template-columns:1fr;} }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">Home</a>
+        <a href="progress-dashboard.html">Dashboard</a>
+        <a href="assignments.html">Assignments</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="gpa-calculator.html">GPA</a>
+        <a href="clinical-hours.html">Clinical</a>
+        <a href="nclex-quiz.html">NCLEX</a>
+        <a href="study-schedule.html">Study</a>
+        <a href="skills-checklist.html">Skills</a>
+        <a href="weekly-planner.html">Planner</a>
+        <a href="exam-tracker.html">Exams</a>
+        <a href="habit-tracker.html">Habits</a>
+        <a href="self-care-log.html">Self-Care</a>
+        <a href="class-schedule.html">Classes</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Skills Checklist</h1>
+            <p>Track nursing skills, confidence, and practice status with a quick checklist.</p>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <h2>Add New Skill</h2>
+                <div class="form-group"><label for="skillName">Skill Name</label><input id="skillName" placeholder="IV insertion" /></div>
+                <div class="form-group"><label for="skillCategory">Category</label><select id="skillCategory"><option>Assessment</option><option>Technical</option><option>Communication</option><option>Medication</option><option>Critical Thinking</option><option>Other</option></select></div>
+                <div class="form-group"><label for="skillStatus">Status</label><select id="skillStatus"><option>Not Started</option><option>In Progress</option><option>Mastered</option></select></div>
+                <div class="form-group"><label for="skillNotes">Notes</label><textarea id="skillNotes" placeholder="Practice location, preceptor, reflections..."></textarea></div>
+                <button onclick="saveSkill()">Save Skill</button>
+            </div>
+            <div class="card">
+                <h2>Checklist Summary</h2>
+                <div id="skillSummary" style="color:#555; line-height:1.75;"></div>
+            </div>
+        </div>
+        <div class="card list" id="skillsList"></div>
+    </div>
+    <script>
+        const STORAGE_KEY = 'nsp_skills_checklist';
+        let skills = [];
+        document.addEventListener('DOMContentLoaded', () => { loadSkills(); renderSkills(); });
+        function loadSkills(){ skills = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        function saveSkills(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(skills)); }
+        function saveSkill(){ const name=document.getElementById('skillName').value.trim(); if(!name){ alert('Enter a skill name'); return; } skills.push({ id: Date.now(), name, category: document.getElementById('skillCategory').value, status: document.getElementById('skillStatus').value, notes: document.getElementById('skillNotes').value.trim(), createdAt:new Date().toISOString() }); saveSkills(); renderSkills(); resetForm(); }
+        function resetForm(){ document.getElementById('skillName').value=''; document.getElementById('skillNotes').value=''; }
+        function updateSummary(){ const total = skills.length; const mastered = skills.filter(s=>s.status==='Mastered').length; const inProgress = skills.filter(s=>s.status==='In Progress').length; const notStarted = skills.filter(s=>s.status==='Not Started').length; document.getElementById('skillSummary').innerHTML = `<p>Total skills: <strong>${total}</strong></p><p>Mastered: <strong>${mastered}</strong></p><p>In progress: <strong>${inProgress}</strong></p><p>Not started: <strong>${notStarted}</strong></p>`; }
+        function renderSkills(){ const container=document.getElementById('skillsList'); if(skills.length===0){ container.innerHTML='<div class="empty"><p>No skills added yet.</p></div>'; updateSummary(); return; } container.innerHTML = skills.map(s=>`<div class="item"><div class="item-header"><div><div class="item-title">${escapeHtml(s.name)}</div><div style="color:#666; font-size:0.95em;">${escapeHtml(s.category)}</div></div><span class="badge status-${s.status.toLowerCase().replace(/ /g,'-')}">${s.status}</span></div><div style="color:#555; margin-top:10px;">${escapeHtml(s.notes)||'<em>No notes</em>'}</div><div class="actions"><button class="small-btn edit-btn" onclick="editSkill(${s.id})">Edit</button><button class="small-btn delete-btn" onclick="deleteSkill(${s.id})">Delete</button></div></div>`).join(''); updateSummary(); }
+        function editSkill(id){ const skill = skills.find(s=>s.id===id); if(!skill) return; document.getElementById('skillName').value = skill.name; document.getElementById('skillCategory').value = skill.category; document.getElementById('skillStatus').value = skill.status; document.getElementById('skillNotes').value = skill.notes; deleteSkill(id,true); }
+        function deleteSkill(id, skipSave=false){ skills = skills.filter(s=>s.id!==id); if(!skipSave) saveSkills(); renderSkills(); }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+    </script>
+</body>
+</html>

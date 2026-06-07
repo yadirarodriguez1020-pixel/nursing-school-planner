@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker - Nursing School Planner</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+        .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+        .nav a{padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit;background:rgba(255,255,255,0.12)}
+        .container{max-width:1100px;margin:0 auto;background:white;border-radius:20px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+        .header{margin-bottom:24px}
+        h1{font-size:2.2em;color:#333;margin-bottom:8px}
+        p{color:#666}
+        .card{background:#f8f9fa;border-radius:16px;padding:20px;margin-bottom:20px}
+        .form-group{margin-bottom:16px}
+        label{display:block;margin-bottom:8px;font-weight:700;color:#444}
+        input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #dfe3eb;font-family:inherit}
+        button{padding:12px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:700;cursor:pointer}
+        .habit-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+        .habit-card{background:white;border-radius:14px;padding:16px;border:1px solid #e0e3ee}
+        .habit-card h3{margin-bottom:10px;color:#333}
+        .status{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:0.85em;font-weight:700}
+        .status-on{background:#d8f5d4;color:#2f9e44}
+        .status-off{background:#ffe3e3;color:#c92a2a}
+        .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+        .small-btn{flex:1;padding:10px;border:none;border-radius:10px;cursor:pointer;font-weight:700;color:white}
+        .toggle-btn{background:#667eea}
+        .delete-btn{background:#ff6b6b}
+        .summary{color:#555;line-height:1.75}
+        .empty{padding:40px;text-align:center;color:#777}
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">Home</a>
+        <a href="progress-dashboard.html">Dashboard</a>
+        <a href="assignments.html">Assignments</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="gpa-calculator.html">GPA</a>
+        <a href="clinical-hours.html">Clinical</a>
+        <a href="nclex-quiz.html">NCLEX</a>
+        <a href="study-schedule.html">Study</a>
+        <a href="skills-checklist.html">Skills</a>
+        <a href="weekly-planner.html">Planner</a>
+        <a href="exam-tracker.html">Exams</a>
+        <a href="habit-tracker.html">Habits</a>
+        <a href="self-care-log.html">Self-Care</a>
+        <a href="class-schedule.html">Classes</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>⏱ Habit Tracker</h1>
+            <p>Keep daily habits on track and build consistency with easy toggles.</p>
+        </div>
+        <div class="card">
+            <h2>Add Habit</h2>
+            <div class="form-group"><label for="habitName">Habit</label><input id="habitName" placeholder="Drink 8 glasses of water"/></div>
+            <div class="form-group"><label for="habitCategory">Category</label><select id="habitCategory"><option>Health</option><option>Wellness</option><option>Study</option><option>Self-care</option><option>Fitness</option><option>Other</option></select></div>
+            <div class="form-group"><label for="habitFrequency">Frequency</label><select id="habitFrequency"><option>Daily</option><option>Weekly</option><option>3x a week</option><option>Custom</option></select></div>
+            <button onclick="addHabit()">Add Habit</button>
+        </div>
+        <div class="card summary" id="habitSummary"></div>
+        <div class="card">
+            <h2>Habit List</h2>
+            <div class="habit-list" id="habitList"></div>
+        </div>
+    </div>
+    <script>
+        const STORAGE_KEY='nsp_habit_tracker'; let habits=[];
+        document.addEventListener('DOMContentLoaded',()=>{ loadHabits(); renderHabits(); });
+        function loadHabits(){ habits=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+        function saveHabits(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(habits)); }
+        function addHabit(){ const name=document.getElementById('habitName').value.trim(); const category=document.getElementById('habitCategory').value; const frequency=document.getElementById('habitFrequency').value; if(!name){ alert('Enter a habit'); return; } habits.push({ id:Date.now(), name, category, frequency, active:false }); saveHabits(); renderHabits(); document.getElementById('habitName').value=''; }
+        function renderHabits(){ const list=document.getElementById('habitList'); if(habits.length===0){ list.innerHTML='<div class="empty"><p>No habits added yet.</p></div>'; updateSummary(); return; } list.innerHTML=habits.map(h=>`<div class="habit-card"><h3>${escapeHtml(h.name)}</h3><div style="color:#555;margin-bottom:10px;">${escapeHtml(h.category)} • ${escapeHtml(h.frequency)}</div><div class="status ${h.active?'status-on':'status-off'}">${h.active?'Done':'Pending'}</div><div class="actions"><button class="small-btn toggle-btn" onclick="toggleHabit(${h.id})">Toggle</button><button class="small-btn delete-btn" onclick="deleteHabit(${h.id})">Delete</button></div></div>`).join(''); updateSummary(); }
+        function toggleHabit(id){ const habit=habits.find(h=>h.id===id); if(!habit) return; habit.active=!habit.active; saveHabits(); renderHabits(); }
+        function deleteHabit(id){ habits=habits.filter(h=>h.id!==id); saveHabits(); renderHabits(); }
+        function updateSummary(){ const total=habits.length; const done=habits.filter(h=>h.active).length; document.getElementById('habitSummary').innerHTML=`<p>Total habits: <strong>${total}</strong></p><p>Completed today: <strong>${done}</strong></p><p>Remaining: <strong>${total-done}</strong></p>`; }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+    </script>
+</body>
+</html>

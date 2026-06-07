@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Self-Care Log - Nursing School Planner</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+        .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+        .nav a{padding:8px 12px;border-radius:8px;text-decoration:none;color:inherit;background:rgba(255,255,255,0.12)}
+        .container{max-width:1100px;margin:0 auto;background:white;border-radius:20px;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+        .header{margin-bottom:24px}
+        h1{font-size:2.2em;color:#333;margin-bottom:8px}
+        p{color:#666}
+        .card{background:#f8f9fa;border-radius:16px;padding:20px;margin-bottom:20px}
+        .form-group{margin-bottom:16px}
+        label{display:block;margin-bottom:8px;font-weight:700;color:#444}
+        input,select,textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #dfe3eb;font-family:inherit}
+        textarea{resize:vertical;min-height:90px}
+        button{padding:12px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-weight:700;cursor:pointer}
+        .log-list{display:grid;gap:16px}
+        .log-item{background:white;border-radius:14px;padding:16px;border:1px solid #e0e3ee}
+        .log-item h3{margin-bottom:10px;color:#333}
+        .meta{color:#555;font-size:0.95em;margin-bottom:10px}
+        .empty{padding:40px;text-align:center;color:#777}
+        .small-btn{padding:10px;border:none;border-radius:10px;cursor:pointer;font-weight:700;color:white;background:#ff6b6b}
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="index.html">Home</a>
+        <a href="progress-dashboard.html">Dashboard</a>
+        <a href="assignments.html">Assignments</a>
+        <a href="calendar.html">Calendar</a>
+        <a href="gpa-calculator.html">GPA</a>
+        <a href="clinical-hours.html">Clinical</a>
+        <a href="nclex-quiz.html">NCLEX</a>
+        <a href="study-schedule.html">Study</a>
+        <a href="skills-checklist.html">Skills</a>
+        <a href="weekly-planner.html">Planner</a>
+        <a href="exam-tracker.html">Exams</a>
+        <a href="habit-tracker.html">Habits</a>
+        <a href="self-care-log.html">Self-Care</a>
+        <a href="class-schedule.html">Classes</a>
+    </div>
+    <div class="container">
+        <div class="header">
+            <h1>🌿 Self-Care Log</h1>
+            <p>Record your self-care activities and track mood, duration, and notes.</p>
+        </div>
+        <div class="card">
+            <h2>Log an Activity</h2>
+            <div class="form-group"><label for="careDate">Date</label><input id="careDate" type="date"/></div>
+            <div class="form-group"><label for="careActivity">Activity</label><input id="careActivity" placeholder="Meditation, Walk, Sleep"/></div>
+            <div class="form-group"><label for="careDuration">Duration (minutes)</label><input id="careDuration" type="number" min="1" value="15"/></div>
+            <div class="form-group"><label for="careMood">Mood</label><select id="careMood"><option>Happy</option><option>Calm</option><option>Stressed</option><option>Tired</option><option>Refreshed</option><option>Other</option></select></div>
+            <div class="form-group"><label for="careNotes">Notes</label><textarea id="careNotes" placeholder="What helped? How do you feel?"></textarea></div>
+            <button onclick="saveCare()">Save Self-Care</button>
+        </div>
+        <div class="card log-list" id="careList"></div>
+    </div>
+    <script>
+        const STORAGE_KEY='nsp_self_care_log'; let logs=[];
+        document.addEventListener('DOMContentLoaded',()=>{ loadLogs(); renderLogs(); document.getElementById('careDate').value=new Date().toISOString().split('T')[0]; });
+        function loadLogs(){ logs=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+        function saveLogs(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(logs)); }
+        function saveCare(){ const date=document.getElementById('careDate').value; const activity=document.getElementById('careActivity').value.trim(); const duration=parseInt(document.getElementById('careDuration').value); const mood=document.getElementById('careMood').value; const notes=document.getElementById('careNotes').value.trim(); if(!date||!activity||isNaN(duration)||duration<1){ alert('Fill required fields'); return; } logs.push({ id:Date.now(), date, activity, duration, mood, notes }); saveLogs(); renderLogs(); document.getElementById('careActivity').value=''; document.getElementById('careDuration').value='15'; document.getElementById('careNotes').value=''; }
+        function renderLogs(){ const container=document.getElementById('careList'); if(logs.length===0){ container.innerHTML='<div class="empty"><p>No self-care activities yet.</p></div>'; return; } logs.sort((a,b)=>new Date(b.date)-new Date(a.date)); container.innerHTML=logs.map(log=>`<div class="log-item"><h3>${escapeHtml(log.activity)}</h3><div class="meta">${formatDate(log.date)} • ${log.duration} min • ${escapeHtml(log.mood)}</div><p style="color:#555;">${escapeHtml(log.notes)||'<em>No notes</em>'}</p><button class="small-btn" onclick="deleteLog(${log.id})">Delete</button></div>`).join(''); }
+        function deleteLog(id){ logs=logs.filter(l=>l.id!==id); saveLogs(); renderLogs(); }
+        function formatDate(date){ return new Date(date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+        function escapeHtml(text){ const div=document.createElement('div'); div.textContent=text; return div.innerHTML; }
+    </script>
+</body>
+</html>
