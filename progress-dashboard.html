@@ -531,7 +531,33 @@
                     <option value="Spring 2025">Spring 2025</option>
                 </select>
             </div>
-            <button class="btn btn-secondary refresh-button" onclick="refreshDashboard()">🔄 Refresh</button>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="toggleAddCourse()">+ Add Course</button>
+                <button class="btn btn-secondary refresh-button" onclick="refreshDashboard()">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <div id="addCourseForm" style="display:none; margin-bottom:20px; background: white; border-radius: 12px; padding: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.1);">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <input id="courseName" placeholder="Course name" style="padding:8px 12px; border-radius:8px; border:1px solid #e0e0e0; flex:2" />
+                <input id="courseCode" placeholder="Code (optional)" style="padding:8px 12px; border-radius:8px; border:1px solid #e0e0e0; flex:1" />
+                <input id="courseCredits" placeholder="Credits" type="number" min="0" style="padding:8px 12px; border-radius:8px; border:1px solid #e0e0e0; width:100px" />
+                <select id="courseGrade" style="padding:8px 12px; border-radius:8px; border:1px solid #e0e0e0; width:130px">
+                    <option value="A">A</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B">B</option>
+                    <option value="B-">B-</option>
+                    <option value="C+">C+</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="F">F</option>
+                </select>
+                <input id="courseSemester" placeholder="Semester (e.g., Fall 2024)" style="padding:8px 12px; border-radius:8px; border:1px solid #e0e0e0; width:160px" />
+                <button class="btn btn-primary" onclick="addCourse()">Save</button>
+                <button class="btn btn-secondary" onclick="toggleAddCourse(true)">Cancel</button>
+            </div>
+            <div style="margin-top:10px; color:#666; font-size:0.9em">Tip: add courses to populate the dashboard and charts.</div>
         </div>
 
         <div class="dashboard-grid" id="dashboardStats">
@@ -628,6 +654,18 @@
             </div>
         </div>
 
+        <div class="chart-container">
+            <h2>📅 Upcoming Assignments</h2>
+            <div id="upcomingAssignments" style="min-height:60px; color:#666">Loading upcoming assignments...</div>
+        </div>
+
+        <div class="chart-container">
+            <h2>📘 Courses</h2>
+            <div id="coursesContainer">
+                <!-- Courses table will render here -->
+            </div>
+        </div>
+
         <div class="timeline">
             <h2>📅 Academic Timeline</h2>
             <div id="timelineContainer">
@@ -661,6 +699,119 @@
             courses = stored ? JSON.parse(stored) : [];
         }
 
+        function saveCourses() {
+            localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
+        }
+
+        function toggleAddCourse(cancel = false) {
+            const el = document.getElementById('addCourseForm');
+            if (cancel) {
+                // clear inputs
+                document.getElementById('courseName').value = '';
+                document.getElementById('courseCode').value = '';
+                document.getElementById('courseCredits').value = '';
+                document.getElementById('courseGrade').value = 'A';
+                document.getElementById('courseSemester').value = '';
+                editingIndex = -1;
+            }
+            el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        }
+
+        function addCourse() {
+            const name = document.getElementById('courseName').value.trim();
+            const code = document.getElementById('courseCode').value.trim();
+            const creditsRaw = document.getElementById('courseCredits').value;
+            const credits = creditsRaw === '' ? 0 : parseFloat(creditsRaw);
+            const grade = document.getElementById('courseGrade').value;
+            const semesterInput = document.getElementById('courseSemester').value.trim();
+            const semester = semesterInput || 'Current';
+
+            if (!name) {
+                alert('Please enter a course name');
+                return;
+            }
+
+            if (!isFinite(credits) || credits < 0) {
+                alert('Credits must be a non-negative number');
+                return;
+            }
+
+            const gradePoints = gradeScale[grade] || 0;
+
+            const courseData = {
+                name,
+                code,
+                credits,
+                grade,
+                gradePoints,
+                semester
+            };
+
+            if (typeof editingIndex === 'number' && editingIndex >= 0 && editingIndex < courses.length) {
+                const existing = courses[editingIndex];
+                courses[editingIndex] = { ...existing, ...courseData };
+                editingIndex = -1;
+            } else {
+                courses.push({ ...courseData, createdAt: new Date().toISOString() });
+            }
+
+            saveCourses();
+            updateDashboard();
+            toggleAddCourse(true);
+        }
+
+        // Course list + edit/delete
+        let editingIndex = -1;
+
+        function renderCoursesTable() {
+            const filtered = getFilteredCourses();
+            if (filtered.length === 0) {
+                document.getElementById('coursesContainer').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">No courses yet — add one to get started.</div></div>';
+                return;
+            }
+
+            let html = '<table style="width:100%; border-collapse:collapse;">';
+            html += '<thead><tr style="text-align:left; border-bottom:2px solid #eee;">';
+            html += '<th style="padding:8px">Name</th><th style="padding:8px">Code</th><th style="padding:8px">Credits</th><th style="padding:8px">Grade</th><th style="padding:8px">Semester</th><th style="padding:8px">Actions</th>';
+            html += '</tr></thead><tbody>';
+
+            filtered.forEach((c, idx) => {
+                // find overall index
+                const overallIndex = courses.indexOf(c);
+                html += `<tr style="border-bottom:1px solid #f0f0f0">`;
+                html += `<td style="padding:8px">${c.name}</td>`;
+                html += `<td style="padding:8px">${c.code || '-'}</td>`;
+                html += `<td style="padding:8px">${c.credits}</td>`;
+                html += `<td style="padding:8px">${c.grade}</td>`;
+                html += `<td style="padding:8px">${c.semester}</td>`;
+                html += `<td style="padding:8px"><button class="btn btn-primary" onclick="editCourse(${overallIndex})">Edit</button> <button class="btn btn-secondary" onclick="deleteCourse(${overallIndex})">Delete</button></td>`;
+                html += `</tr>`;
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('coursesContainer').innerHTML = html;
+        }
+
+        function editCourse(index) {
+            const c = courses[index];
+            if (!c) return;
+            editingIndex = index;
+            document.getElementById('courseName').value = c.name || '';
+            document.getElementById('courseCode').value = c.code || '';
+            document.getElementById('courseCredits').value = c.credits || '';
+            document.getElementById('courseGrade').value = c.grade || 'A';
+            document.getElementById('courseSemester').value = c.semester || 'Current';
+            const el = document.getElementById('addCourseForm');
+            el.style.display = 'block';
+        }
+
+        function deleteCourse(index) {
+            if (!confirm('Delete this course?')) return;
+            courses.splice(index, 1);
+            saveCourses();
+            updateDashboard();
+        }
+
         function getFilteredCourses() {
             if (selectedSemester === 'all') return courses;
             return courses.filter(c => c.semester === selectedSemester);
@@ -674,6 +825,8 @@
             generateInsights();
             generateAchievements();
             generateTimeline();
+            renderCoursesTable();
+            renderUpcomingAssignments();
         }
 
         function refreshDashboard() {
@@ -1197,6 +1350,71 @@
             }).join('');
 
             document.getElementById('timelineContainer').innerHTML = html;
+        }
+
+        // Upcoming assignments integration (reads from assignments page localStorage)
+        function renderUpcomingAssignments() {
+            const raw = localStorage.getItem('nsp_assignments');
+            let assigns = [];
+            try { assigns = raw ? JSON.parse(raw) : []; } catch(e) { assigns = []; }
+
+            const upcoming = assigns
+                .filter(a => a.status !== 'Completed')
+                .filter(a => a.dueDate)
+                .map(a => ({ ...a, dueTs: new Date(a.dueDate).getTime() }))
+                .filter(a => !isNaN(a.dueTs))
+                .sort((x,y) => x.dueTs - y.dueTs)
+                .slice(0,5);
+
+            if (!upcoming.length) {
+                document.getElementById('upcomingAssignments').innerHTML = '<div class="empty-state"><div class="empty-state-text">No upcoming assignments. Add one in the Assignments page.</div></div>';
+                return;
+            }
+
+            const today = new Date();
+            const html = upcoming.map(a => {
+                const due = new Date(a.dueDate);
+                const diffDays = Math.ceil((due - today) / (1000*60*60*24));
+                const dueText = due.toLocaleDateString();
+                const when = diffDays < 0 ? `${Math.abs(diffDays)} days overdue` : (diffDays === 0 ? 'Due today' : `In ${diffDays} day${diffDays>1?'s':''}`);
+                return `<div style="padding:8px 0;border-bottom:1px dashed #eef"><div style="font-weight:700">${a.title}</div><div class="muted">${a.course || ''} • ${dueText} — ${when} • <a href="assignments.html">Open</a> <button class="btn btn-primary" style="margin-left:8px;padding:6px 8px;font-size:0.9em" onclick="markAssignmentCompleteFromDashboard('${a.id}')">Mark Done</button></div></div>`;
+            }).join('');
+
+            document.getElementById('upcomingAssignments').innerHTML = html;
+        }
+
+        // update upcoming assignments when assignments/calendar change in other tabs
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'nsp_assignments' || e.key === 'nsp_calendar_events') {
+                renderUpcomingAssignments();
+                renderCoursesTable();
+            }
+        });
+
+        function markAssignmentCompleteFromDashboard(id) {
+            try {
+                const raw = localStorage.getItem('nsp_assignments');
+                let assigns = raw ? JSON.parse(raw) : [];
+                const idx = assigns.findIndex(x => x.id === id);
+                if (idx === -1) { alert('Assignment not found'); return; }
+                assigns[idx].status = 'Completed';
+                assigns[idx].updatedAt = new Date().toISOString();
+                localStorage.setItem('nsp_assignments', JSON.stringify(assigns));
+
+                // remove matching calendar event(s)
+                const calRaw = localStorage.getItem('nsp_calendar_events');
+                let cal = calRaw ? JSON.parse(calRaw) : [];
+                cal = cal.filter(e => e.assignmentId !== id);
+                localStorage.setItem('nsp_calendar_events', JSON.stringify(cal));
+
+                renderUpcomingAssignments();
+                // notify user briefly
+                const msg = document.getElementById('upcomingAssignments');
+                if (msg) msg.style.border = '1px solid #e6f4ea';
+            } catch (err) {
+                console.error(err);
+                alert('Failed to mark assignment complete');
+            }
         }
     </script>
 </body>

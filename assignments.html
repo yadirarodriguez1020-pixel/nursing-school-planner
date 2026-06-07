@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Assignments - Nursing School Planner</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 24px; background: #f6f8fb; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 6px }
+        p.lead { color:#666; margin-bottom:20px }
+        .card { background:white; padding:16px; border-radius:10px; box-shadow: 0 8px 30px rgba(0,0,0,0.06); margin-bottom:20px }
+        .row { display:flex; gap:10px; flex-wrap:wrap; }
+        input, select, textarea { padding:8px 10px; border-radius:8px; border:1px solid #e6e9ee; font-family:inherit }
+        input[type="date"] { padding:6px 8px }
+        label { font-weight:600; color:#444; font-size:0.9em }
+        .field { display:flex; flex-direction:column; gap:6px; min-width:160px }
+        .actions { display:flex; gap:8px; margin-top:8px }
+        .btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600 }
+        .btn-primary { background:linear-gradient(135deg,#667eea,#764ba2); color:white }
+        .btn-secondary { background:#f0f0f0; color:#333 }
+        table { width:100%; border-collapse:collapse }
+        th, td { padding:10px; text-align:left; border-bottom:1px solid #f0f0f0 }
+        .muted { color:#888; font-size:0.9em }
+        .priority-high { color:#c92a2a; font-weight:700 }
+        .priority-medium { color:#f59f00; font-weight:700 }
+        .priority-low { color:#2b8a3e; font-weight:700 }
+        @media (max-width:720px){ .row { flex-direction:column } .field{ min-width:100% } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Assignments</h1>
+        <p class="lead">Create, edit, and track assignments. Items will sync to the calendar for quick scheduling.</p>
+
+        <div class="card">
+            <div id="formContainer">
+                <div class="row">
+                    <div class="field">
+                        <label for="title">Title</label>
+                        <input id="title" placeholder="Assignment title" />
+                    </div>
+
+                    <div class="field">
+                        <label for="course">Course</label>
+                        <input id="course" placeholder="Course name" />
+                    </div>
+
+                    <div class="field">
+                        <label for="dueDate">Due date</label>
+                        <input id="dueDate" type="date" />
+                    </div>
+
+                    <div class="field">
+                        <label for="status">Status</label>
+                        <select id="status">
+                            <option>Not Started</option>
+                            <option>In Progress</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="priority">Priority</label>
+                        <select id="priority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="gradePct">Grade % (optional)</label>
+                        <input id="gradePct" type="number" min="0" max="100" placeholder="e.g. 92" />
+                    </div>
+
+                    <div class="field" style="flex:1; min-width:220px">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" rows="3" placeholder="Optional notes"></textarea>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" id="saveBtn">Save Assignment</button>
+                    <button class="btn btn-secondary" id="cancelBtn">Clear</button>
+                    <div id="formMessage" class="muted" style="margin-left:8px"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-top:0">Upcoming Assignments</h2>
+            <div id="assignmentsList" class="muted">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        // Keys for localStorage
+        const ASSIGNMENTS_KEY = 'nsp_assignments';
+        const CALENDAR_KEY = 'nsp_calendar_events';
+
+        let assignments = [];
+        let editingId = null;
+
+        function loadAssignments() {
+            const raw = localStorage.getItem(ASSIGNMENTS_KEY);
+            assignments = raw ? JSON.parse(raw) : [];
+        }
+
+        function saveAssignments() {
+            localStorage.setItem(ASSIGNMENTS_KEY, JSON.stringify(assignments));
+        }
+
+        function loadCalendarEvents() {
+            const raw = localStorage.getItem(CALENDAR_KEY);
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        function saveCalendarEvents(events) {
+            localStorage.setItem(CALENDAR_KEY, JSON.stringify(events));
+        }
+
+        function syncAssignmentToCalendar(a) {
+            // ensure event with assignmentId exists/updated
+            const events = loadCalendarEvents();
+            const existing = events.find(e => e.assignmentId === a.id);
+            if (existing) {
+                existing.title = a.title;
+                existing.date = a.dueDate;
+                existing.source = 'assignment';
+            } else {
+                events.push({ id: 'ev_' + Date.now(), title: a.title, date: a.dueDate, source: 'assignment', assignmentId: a.id });
+            }
+            saveCalendarEvents(events);
+        }
+
+        function removeAssignmentCalendarEvent(aid) {
+            const events = loadCalendarEvents().filter(e => e.assignmentId !== aid);
+            saveCalendarEvents(events);
+        }
+
+        function renderAssignments() {
+            if (!assignments || assignments.length === 0) {
+                document.getElementById('assignmentsList').innerHTML = '<div class="empty-state">No assignments yet. Add one above to get started.</div>';
+                return;
+            }
+
+            // sort by due date asc
+            const sorted = [...assignments].sort((x,y) => new Date(x.dueDate) - new Date(y.dueDate));
+
+            let html = '<table><thead><tr><th>Title</th><th>Course</th><th>Due</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody>';
+            const today = new Date();
+            sorted.forEach(a => {
+                const due = a.dueDate ? new Date(a.dueDate) : null;
+                let dueText = due ? due.toLocaleDateString() : 'No date';
+                let rowClass = '';
+                if (due) {
+                    const diff = Math.ceil((due - today) / (1000*60*60*24));
+                    if (diff < 0 && a.status !== 'Completed') rowClass = 'style="background:#fff6f6"';
+                }
+                html += `<tr ${rowClass}><td>${a.title}</td><td>${a.course||''}</td><td>${dueText}</td><td class="priority-${a.priority}">${a.priority}</td><td>${a.status}</td><td>`;
+                html += `<button class="btn btn-primary" onclick="startEdit('${a.id}')">Edit</button> <button class="btn btn-secondary" onclick="deleteAssignment('${a.id}')">Delete</button>`;
+                if (a.status !== 'Completed') html += ` <button class="btn" style="background:#e6f3ff;color:#0366d6" onclick="markComplete('${a.id}')">Mark Done</button>`;
+                html += `</td></tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('assignmentsList').innerHTML = html;
+        }
+
+        function uid() { return 'a_' + Date.now() + '_' + Math.floor(Math.random()*9999); }
+
+        function clearForm() {
+            document.getElementById('title').value = '';
+            document.getElementById('course').value = '';
+            document.getElementById('dueDate').value = '';
+            document.getElementById('status').value = 'Not Started';
+            document.getElementById('priority').value = 'low';
+            document.getElementById('gradePct').value = '';
+            document.getElementById('notes').value = '';
+            editingId = null;
+            document.getElementById('formMessage').textContent = '';
+        }
+
+        function startEdit(id) {
+            const a = assignments.find(x => x.id === id);
+            if (!a) return;
+            editingId = id;
+            document.getElementById('title').value = a.title;
+            document.getElementById('course').value = a.course || '';
+            document.getElementById('dueDate').value = a.dueDate || '';
+            document.getElementById('status').value = a.status || 'Not Started';
+            document.getElementById('priority').value = a.priority || 'low';
+            document.getElementById('gradePct').value = a.gradePct || '';
+            document.getElementById('notes').value = a.notes || '';
+            document.getElementById('formMessage').textContent = 'Editing assignment';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteAssignment(id) {
+            if (!confirm('Delete this assignment?')) return;
+            assignments = assignments.filter(a => a.id !== id);
+            saveAssignments();
+            removeAssignmentCalendarEvent(id);
+            renderAssignments();
+        }
+
+        function markComplete(id) {
+            const a = assignments.find(x => x.id === id);
+            if (!a) return;
+            a.status = 'Completed';
+            saveAssignments();
+            renderAssignments();
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const title = document.getElementById('title').value.trim();
+            const course = document.getElementById('course').value.trim();
+            const dueDate = document.getElementById('dueDate').value;
+            const status = document.getElementById('status').value;
+            const priority = document.getElementById('priority').value;
+            const gradePct = document.getElementById('gradePct').value;
+            const notes = document.getElementById('notes').value;
+
+            if (!title) { document.getElementById('formMessage').textContent = 'Title is required'; return; }
+            if (dueDate && isNaN(new Date(dueDate).getTime())) { document.getElementById('formMessage').textContent = 'Invalid date'; return; }
+
+            if (editingId) {
+                const idx = assignments.findIndex(x => x.id === editingId);
+                if (idx >= 0) {
+                    assignments[idx] = { ...assignments[idx], title, course, dueDate, status, priority, gradePct, notes, updatedAt: new Date().toISOString() };
+                    syncAssignmentToCalendar(assignments[idx]);
+                    saveAssignments();
+                    renderAssignments();
+                    clearForm();
+                    document.getElementById('formMessage').textContent = 'Assignment updated';
+                    return;
+                }
+            }
+
+            const a = { id: uid(), title, course, dueDate, status, priority, gradePct, notes, createdAt: new Date().toISOString() };
+            assignments.push(a);
+            saveAssignments();
+            syncAssignmentToCalendar(a);
+            renderAssignments();
+            clearForm();
+            document.getElementById('formMessage').textContent = 'Assignment saved';
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', () => { clearForm(); });
+
+        // init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAssignments();
+            renderAssignments();
+        });
+    </script>
+</body>
+</html>
