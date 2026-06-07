@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Dashboard - Nursing School Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-card-subtitle {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+            width: 120px;
+            height: 120px;
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            stroke-dasharray: 339.29;
+            stroke-dashoffset: 0;
+        }
+
+        .stat-card-circular {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .circular-text {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .circular-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .circular-label {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .chart-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .charts-grid .chart-container {
+            margin-bottom: 0;
+        }
+
+        .timeline {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .timeline h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline-item:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 40px;
+            bottom: -25px;
+            width: 2px;
+            background: #e0e0e0;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -15px;
+            top: 5px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .timeline-date {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .timeline-description {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .goals-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .goal-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .goal-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .goal-progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .goal-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            border-radius: 5px;
+        }
+
+        .goal-progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .milestone-badge {
+            display: inline-block;
+            background: #f0f1f5;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .achievement-badge {
+            display: inline-block;
+            text-align: center;
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+
+        .achievement-icon {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+        }
+
+        .achievement-name {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .achievement-unlocked {
+            opacity: 1;
+        }
+
+        .achievement-locked {
+            opacity: 0.3;
+            filter: grayscale(100%);
+        }
+
+        .insights-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .insights-card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .insight-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .insight-icon {
+            font-size: 1.5em;
+            min-width: 30px;
+        }
+
+        .insight-text {
+            flex: 1;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .insight-description {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-text {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .summary-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-box strong {
+            color: #667eea;
+        }
+
+        .heat-map {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .heat-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .heat-cell:hover {
+            transform: scale(1.1);
+        }
+
+        .heat-cell-0 {
+            background: #ebedf0;
+        }
+
+        .heat-cell-1 {
+            background: #c6e48b;
+        }
+
+        .heat-cell-2 {
+            background: #7bc96f;
+        }
+
+        .heat-cell-3 {
+            background: #239a3b;
+        }
+
+        .heat-cell-4 {
+            background: #196127;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .chart-wrapper {
+                height: 300px;
+            }
+        }
+
+        .filter-bar {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .filter-group select {
+            padding: 8px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .refresh-button {
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Progress Dashboard</h1>
+            <p>Track your nursing school journey with comprehensive analytics and insights</p>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="semesterFilter">Semester:</label>
+                <select id="semesterFilter" onchange="updateDashboard()">
+                    <option value="all">All Semesters</option>
+                    <option value="Current">Current</option>
+                    <option value="Fall 2024">Fall 2024</option>
+                    <option value="Spring 2025">Spring 2025</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary refresh-button" onclick="refreshDashboard()">🔄 Refresh</button>
+        </div>
+
+        <div class="dashboard-grid" id="dashboardStats">
+            <!-- Stats cards will be populated here -->
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2>📈 GPA Trend</h2>
+                <div class="chart-wrapper">
+                    <canvas id="gpaChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>🎯 Grade Distribution</h2>
+                <div class="chart-wrapper">
+                    <canvas id="gradeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h2>📚 Credits Progress</h2>
+                <div class="chart-wrapper">
+                    <canvas id="creditsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>💪 Study Intensity</h2>
+                <div class="chart-wrapper">
+                    <canvas id="intensityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="goals-container">
+            <div class="goal-card">
+                <h3>🎯 GPA Goal</h3>
+                <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" id="gpaGoalBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-progress-text">
+                    <span id="currentGPA">0.00</span>
+                    <span id="gpaTarget">Target: 3.5</span>
+                </div>
+                <div style="margin-top: 15px; color: #999; font-size: 0.9em;">
+                    <span id="gpaRemaining">0.00 more needed</span>
+                </div>
+            </div>
+
+            <div class="goal-card">
+                <h3>📚 Credits Goal</h3>
+                <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" id="creditsGoalBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-progress-text">
+                    <span id="currentCredits">0</span>
+                    <span id="creditsTarget">Target: 120</span>
+                </div>
+                <div style="margin-top: 15px; color: #999; font-size: 0.9em;">
+                    <span id="creditsRemaining">120 more needed</span>
+                </div>
+            </div>
+
+            <div class="goal-card">
+                <h3>⭐ Course Quality</h3>
+                <div class="goal-progress-bar">
+                    <div class="goal-progress-fill" id="qualityGoalBar" style="width: 0%"></div>
+                </div>
+                <div class="goal-progress-text">
+                    <span id="aCount">0 A's</span>
+                    <span id="qualityTarget">Target: 80%</span>
+                </div>
+                <div style="margin-top: 15px; color: #999; font-size: 0.9em;">
+                    <span id="qualityPercentage">0% A/B grades</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="insights-card">
+            <h2>💡 Key Insights & Recommendations</h2>
+            <div id="insightsContainer">
+                <!-- Insights will be populated here -->
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2>🏆 Achievements</h2>
+            <div id="achievementsContainer" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                <!-- Achievements will be populated here -->
+            </div>
+        </div>
+
+        <div class="timeline">
+            <h2>📅 Academic Timeline</h2>
+            <div id="timelineContainer">
+                <!-- Timeline will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data management
+        const COURSES_KEY = 'gpaCalculatorCourses';
+        const DASHBOARD_DATA_KEY = 'dashboardData';
+        let courses = [];
+        let selectedSemester = 'all';
+        let charts = {};
+
+        // Grade scale
+        const gradeScale = {
+            'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+            'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D': 1.0, 'F': 0.0
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCourses();
+            updateDashboard();
+        });
+
+        function loadCourses() {
+            const stored = localStorage.getItem(COURSES_KEY);
+            courses = stored ? JSON.parse(stored) : [];
+        }
+
+        function getFilteredCourses() {
+            if (selectedSemester === 'all') return courses;
+            return courses.filter(c => c.semester === selectedSemester);
+        }
+
+        function updateDashboard() {
+            selectedSemester = document.getElementById('semesterFilter').value;
+            updateStats();
+            updateCharts();
+            updateGoals();
+            generateInsights();
+            generateAchievements();
+            generateTimeline();
+        }
+
+        function refreshDashboard() {
+            loadCourses();
+            updateDashboard();
+            alert('Dashboard refreshed!');
+        }
+
+        function updateStats() {
+            const filtered = getFilteredCourses();
+            
+            const totalCourses = filtered.length;
+            const totalCredits = filtered.reduce((sum, c) => sum + c.credits, 0);
+            const gpa = calculateGPA(filtered);
+            const qualityPoints = filtered.reduce((sum, c) => sum + (c.gradePoints * c.credits), 0);
+
+            const aGrades = filtered.filter(c => c.grade === 'A').length;
+            const bGrades = filtered.filter(c => c.grade.includes('B')).length;
+            const avgCreditsPerCourse = totalCourses > 0 ? (totalCredits / totalCourses).toFixed(1) : 0;
+
+            let html = `
+                <div class="stat-card">
+                    <div class="stat-card-icon">📊</div>
+                    <div class="stat-card-label">Overall GPA</div>
+                    <div class="stat-card-value">${gpa.toFixed(2)}</div>
+                    <div class="stat-card-subtitle">${totalCourses} courses completed</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon">📚</div>
+                    <div class="stat-card-label">Total Credits</div>
+                    <div class="stat-card-value">${totalCredits}</div>
+                    <div class="stat-card-subtitle">Avg ${avgCreditsPerCourse} per course</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon">⭐</div>
+                    <div class="stat-card-label">Quality Points</div>
+                    <div class="stat-card-value">${qualityPoints.toFixed(0)}</div>
+                    <div class="stat-card-subtitle">${aGrades} A's, ${bGrades} B's</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-icon">📈</div>
+                    <div class="stat-card-label">Performance Status</div>
+                    <div class="stat-card-value">${getPerformanceStatus(gpa)}</div>
+                    <div class="stat-card-subtitle">${getPerformanceMessage(gpa)}</div>
+                </div>
+            `;
+
+            document.getElementById('dashboardStats').innerHTML = html;
+        }
+
+        function calculateGPA(courseList = courses) {
+            if (courseList.length === 0) return 0;
+            let totalPoints = 0;
+            let totalCredits = 0;
+            courseList.forEach(course => {
+                totalPoints += course.gradePoints * course.credits;
+                totalCredits += course.credits;
+            });
+            return totalCredits > 0 ? totalPoints / totalCredits : 0;
+        }
+
+        function getPerformanceStatus(gpa) {
+            if (gpa >= 3.8) return '🌟 Excellent';
+            if (gpa >= 3.5) return '⭐ Very Good';
+            if (gpa >= 3.0) return '👍 Good';
+            if (gpa > 0) return '📈 Fair';
+            return '— No Data';
+        }
+
+        function getPerformanceMessage(gpa) {
+            if (gpa >= 3.8) return 'Outstanding achievement!';
+            if (gpa >= 3.5) return 'Strong academic standing';
+            if (gpa >= 3.0) return 'Meeting requirements';
+            if (gpa > 0) return 'Room for improvement';
+            return 'Start tracking courses';
+        }
+
+        function updateCharts() {
+            updateGPAChart();
+            updateGradeChart();
+            updateCreditsChart();
+            updateIntensityChart();
+        }
+
+        function updateGPAChart() {
+            const ctx = document.getElementById('gpaChart').getContext('2d');
+            
+            // Get semester data
+            const semesters = ['Fall 2024', 'Spring 2025', 'Summer 2025', 'Current'];
+            const gpas = semesters.map(sem => {
+                const semCourses = courses.filter(c => c.semester === sem);
+                return calculateGPA(semCourses).toFixed(2);
+            });
+
+            if (charts.gpa) charts.gpa.destroy();
+
+            charts.gpa = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: semesters,
+                    datasets: [{
+                        label: 'Semester GPA',
+                        data: gpas,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    },
+                    {
+                        label: 'Target (3.5)',
+                        data: [3.5, 3.5, 3.5, 3.5],
+                        borderColor: '#ff6b6b',
+                        borderDash: [5, 5],
+                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { font: { size: 12, weight: '600' } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4.0,
+                            ticks: { font: { size: 11 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGradeChart() {
+            const ctx = document.getElementById('gradeChart').getContext('2d');
+            const filtered = getFilteredCourses();
+
+            const gradeLabels = ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'];
+            const gradeCounts = gradeLabels.map(grade => 
+                filtered.filter(c => c.grade === grade).length
+            );
+
+            if (charts.grade) charts.grade.destroy();
+
+            charts.grade = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: gradeLabels,
+                    datasets: [{
+                        data: gradeCounts,
+                        backgroundColor: [
+                            '#51cf66', '#69db7c', '#a9e34b', '#ffd43b', '#ffec99',
+                            '#ffa94d', '#ff922b', '#ff6b6b', '#ee5a52'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 12, weight: '600' }, padding: 15 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCreditsChart() {
+            const ctx = document.getElementById('creditsChart').getContext('2d');
+            const filtered = getFilteredCourses();
+
+            const semesters = ['Fall 2024', 'Spring 2025', 'Summer 2025', 'Current'];
+            const credits = semesters.map(sem => {
+                const semCourses = courses.filter(c => c.semester === sem);
+                return semCourses.reduce((sum, c) => sum + c.credits, 0);
+            });
+
+            const cumulativeCredits = [];
+            let total = 0;
+            credits.forEach(c => {
+                total += c;
+                cumulativeCredits.push(total);
+            });
+
+            if (charts.credits) charts.credits.destroy();
+
+            charts.credits = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: semesters,
+                    datasets: [{
+                        label: 'Credits per Semester',
+                        data: credits,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: '#667eea',
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Cumulative Credits',
+                        data: cumulativeCredits,
+                        type: 'line',
+                        borderColor: '#764ba2',
+                        borderWidth: 3,
+                        fill: false,
+                        yAxisID: 'y1',
+                        pointRadius: 5,
+                        pointBackgroundColor: '#764ba2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { font: { size: 11 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            beginAtZero: true,
+                            ticks: { font: { size: 11 } }
+                        },
+                        x: {
+                            ticks: { font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateIntensityChart() {
+            const ctx = document.getElementById('intensityChart').getContext('2d');
+            const filtered = getFilteredCourses();
+
+            const semesters = ['Fall 2024', 'Spring 2025', 'Summer 2025', 'Current'];
+            const intensity = semesters.map(sem => {
+                const semCourses = courses.filter(c => c.semester === sem);
+                const avgGrade = semCourses.length > 0 
+                    ? semCourses.reduce((sum, c) => sum + c.gradePoints, 0) / semCourses.length 
+                    : 0;
+                return (avgGrade / 4 * 100).toFixed(0);
+            });
+
+            if (charts.intensity) charts.intensity.destroy();
+
+            charts.intensity = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: semesters,
+                    datasets: [{
+                        label: 'Academic Performance %',
+                        data: intensity,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { font: { size: 12, weight: '600' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGoals() {
+            const filtered = getFilteredCourses();
+            const gpa = calculateGPA(filtered);
+            const credits = filtered.reduce((sum, c) => sum + c.credits, 0);
+            const aCount = filtered.filter(c => c.grade === 'A').length;
+            const bCount = filtered.filter(c => c.grade.includes('B')).length;
+            const qualityCount = aCount + bCount;
+            const qualityPercent = filtered.length > 0 ? (qualityCount / filtered.length * 100).toFixed(1) : 0;
+
+            const gpaTarget = 3.5;
+            const creditsTarget = 120;
+            const qualityTarget = 80;
+
+            // GPA Goal
+            const gpaPercent = Math.min((gpa / gpaTarget * 100).toFixed(0), 100);
+            document.getElementById('gpaGoalBar').style.width = gpaPercent + '%';
+            document.getElementById('currentGPA').textContent = gpa.toFixed(2);
+            document.getElementById('gpaRemaining').textContent = Math.max(0, (gpaTarget - gpa).toFixed(2)) + ' more needed';
+
+            // Credits Goal
+            const creditsPercent = Math.min((credits / creditsTarget * 100).toFixed(0), 100);
+            document.getElementById('creditsGoalBar').style.width = creditsPercent + '%';
+            document.getElementById('currentCredits').textContent = credits;
+            document.getElementById('creditsRemaining').textContent = Math.max(0, creditsTarget - credits) + ' more needed';
+
+            // Quality Goal
+            const qualityPercent2 = Math.min((qualityPercent / qualityTarget * 100).toFixed(0), 100);
+            document.getElementById('qualityGoalBar').style.width = qualityPercent2 + '%';
+            document.getElementById('aCount').textContent = aCount + ' A\'s';
+            document.getElementById('qualityPercentage').textContent = qualityPercent + '% A/B grades';
+        }
+
+        function generateInsights() {
+            const filtered = getFilteredCourses();
+            const gpa = calculateGPA(filtered);
+            let insights = [];
+
+            if (filtered.length === 0) {
+                insights.push({
+                    icon: '📚',
+                    title: 'Get Started',
+                    description: 'Add your first course to begin tracking your progress!'
+                });
+            } else {
+                // GPA insights
+                if (gpa >= 3.8) {
+                    insights.push({
+                        icon: '🌟',
+                        title: 'Outstanding Performance',
+                        description: 'You\'re maintaining an excellent GPA! Keep up the great work!'
+                    });
+                } else if (gpa < 3.0) {
+                    insights.push({
+                        icon: '⚠️',
+                        title: 'GPA Below Target',
+                        description: 'Consider focusing on improving grades in upcoming courses to reach your 3.5 target.'
+                    });
+                }
+
+                // Grade pattern
+                const aCount = filtered.filter(c => c.grade === 'A').length;
+                const fCount = filtered.filter(c => c.grade === 'F').length;
+
+                if (aCount >= filtered.length * 0.5) {
+                    insights.push({
+                        icon: '⭐',
+                        title: 'Strong Performance',
+                        description: `Over 50% of your courses are A's! Keep maintaining this excellent standard.`
+                    });
+                }
+
+                if (fCount > 0) {
+                    insights.push({
+                        icon: '🔴',
+                        title: 'Failed Courses',
+                        description: `You have ${fCount} failed course(s). Consider retaking or seeking academic support.`
+                    });
+                }
+
+                // Credit load
+                const avgCredits = filtered.reduce((sum, c) => sum + c.credits, 0) / filtered.length;
+                if (avgCredits >= 4) {
+                    insights.push({
+                        icon: '💪',
+                        title: 'Heavy Course Load',
+                        description: `You're averaging ${avgCredits.toFixed(1)} credits per course. Ensure you have adequate study time!`
+                    });
+                }
+
+                // Consistency
+                const semesters = [...new Set(filtered.map(c => c.semester))].length;
+                if (semesters >= 2) {
+                    const semGPAs = [...new Set(filtered.map(c => c.semester))].map(sem => 
+                        calculateGPA(courses.filter(c => c.semester === sem))
+                    );
+                    const variance = Math.max(...semGPAs) - Math.min(...semGPAs);
+                    if (variance > 0.5) {
+                        insights.push({
+                            icon: '📊',
+                            title: 'GPA Fluctuation',
+                            description: 'Your semester GPAs vary significantly. Focus on consistent performance.'
+                        });
+                    }
+                }
+            }
+
+            let html = insights.map(insight => `
+                <div class="insight-item">
+                    <div class="insight-icon">${insight.icon}</div>
+                    <div class="insight-text">
+                        <div class="insight-title">${insight.title}</div>
+                        <div class="insight-description">${insight.description}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (insights.length === 0) {
+                html = '<div class="empty-state"><p>No insights available yet. Add more courses to get personalized recommendations!</p></div>';
+            }
+
+            document.getElementById('insightsContainer').innerHTML = html;
+        }
+
+        function generateAchievements() {
+            const filtered = getFilteredCourses();
+            const gpa = calculateGPA(filtered);
+            const totalCredits = filtered.reduce((sum, c) => sum + c.credits, 0);
+            const aCount = filtered.filter(c => c.grade === 'A').length;
+
+            const achievements = [
+                {
+                    name: 'First Steps',
+                    icon: '🚀',
+                    condition: filtered.length >= 1,
+                    description: 'Added first course'
+                },
+                {
+                    name: 'GPA 3.0+',
+                    icon: '📈',
+                    condition: gpa >= 3.0,
+                    description: 'Achieved 3.0 GPA'
+                },
+                {
+                    name: 'GPA 3.5+',
+                    icon: '⭐',
+                    condition: gpa >= 3.5,
+                    description: 'Achieved 3.5 GPA'
+                },
+                {
+                    name: 'Honor Student',
+                    icon: '🏆',
+                    condition: gpa >= 3.8,
+                    description: 'Achieved 3.8+ GPA'
+                },
+                {
+                    name: 'Perfect Courses',
+                    icon: '💯',
+                    condition: aCount >= 5,
+                    description: '5+ A grades'
+                },
+                {
+                    name: 'Credit Master',
+                    icon: '📚',
+                    condition: totalCredits >= 30,
+                    description: '30+ credits'
+                },
+                {
+                    name: 'Degree Halfway',
+                    icon: '🎯',
+                    condition: totalCredits >= 60,
+                    description: '60+ credits'
+                },
+                {
+                    name: 'Ready to Graduate',
+                    icon: '🎓',
+                    condition: totalCredits >= 120,
+                    description: '120+ credits'
+                }
+            ];
+
+            let html = achievements.map(ach => `
+                <div class="achievement-badge ${ach.condition ? 'achievement-unlocked' : 'achievement-locked'}">
+                    <div class="achievement-icon">${ach.icon}</div>
+                    <div class="achievement-name">${ach.name}</div>
+                    <div style="font-size: 0.75em; color: #999;">${ach.description}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('achievementsContainer').innerHTML = html;
+        }
+
+        function generateTimeline() {
+            const filtered = getFilteredCourses();
+            
+            if (filtered.length === 0) {
+                document.getElementById('timelineContainer').innerHTML = 
+                    '<div class="empty-state"><p>No courses added yet. Your timeline will appear here!</p></div>';
+                return;
+            }
+
+            const sortedCourses = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            let html = sortedCourses.slice(0, 8).map((course, index) => {
+                const date = new Date(course.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                return `
+                    <div class="timeline-item">
+                        <div class="timeline-marker">${index + 1}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">${course.name} ${course.code ? `(${course.code})` : ''}</div>
+                            <div class="timeline-date">${date}</div>
+                            <div class="timeline-description">
+                                Grade: <strong>${course.grade}</strong> | 
+                                Credits: <strong>${course.credits}</strong> | 
+                                Semester: <strong>${course.semester}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('timelineContainer').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
